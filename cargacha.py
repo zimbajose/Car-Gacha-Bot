@@ -1,7 +1,7 @@
 import json
 import random
 import discord
-
+import shared
 import mysql.connector
 import ddbconnector
 
@@ -32,6 +32,10 @@ class CarGacha:
     async def __gacha_car(self,message):
         rarity  = self.__get_random_rarity()
         car = Car.get_random_car(rarity)
+
+        discord_tag = message.author.global_name
+        user = shared.User.search_user(discord_tag)
+        
 
         embed_car = discord.Embed()
         embed_car.set_image(url=car.image_url)
@@ -132,3 +136,5 @@ class Car:
         cursor.close()
         cnx.close()
         return Car(id,model,brand,price,image_url,rarity)
+    
+    #Adds a ownership of this car to the database

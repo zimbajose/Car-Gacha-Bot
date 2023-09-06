@@ -34,6 +34,10 @@ Returns the best recommended artifact sets for the character.
     $genshin stats <nome do personagem>
 Returns the best main stats for the, sands, chalice and circlet for the character, and also the recommended substats for the character.
 
+## Car gacha
+This bot has a car gacha function, in which you can roll for random cars.
+## Rolls for a random car
+    $car gacha
 ## Other links
 
 ### The datasets i used for gathering the cars
