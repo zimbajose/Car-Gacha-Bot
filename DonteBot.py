@@ -1,13 +1,14 @@
 import discord
 import Genshin
 import traceback
+from cargacha import CarGacha
 
 intents = discord.Intents.default()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-
+car_gacha = CarGacha()
 
 @client.event
 async def on_ready():
@@ -15,14 +16,17 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    
     if message.author == client.user:
         return
     
     try:
-       
         #Genshin Functions
         if message.content.startswith("$genshin"):
             await Genshin.message(message)
+
+        if message.content.startswith("$car"):
+            await car_gacha.message(message)
 
     
     except:

@@ -7,13 +7,14 @@ This bot requires the following libraries:
 - Selenium
 - Beautiful Soup 4
 - Discord py
+- Mysql connector
 
 Installation commands with pip:
 #####
     pip install selenium
     pip install beautifulsoup4
     pip install discord.py
-
+    pip install mysql-connector-python
 
 ## Genshin functions
 This bot has commands to display the best weapons and artifacts for genshin characters, obtained from genshin.gg.
@@ -32,3 +33,8 @@ Returns the best recommended artifact sets for the character.
 ### Status
     $genshin stats <nome do personagem>
 Returns the best main stats for the, sands, chalice and circlet for the character, and also the recommended substats for the character.
+
+## Other links
+
+### The datasets i used for gathering the cars
+https://www.kaggle.com/datasets/prasertk/gran-turismo-6-carsd

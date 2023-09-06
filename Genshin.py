@@ -3,7 +3,7 @@ import json
 
 __genshin_data = ''
 #Load the json
-with open("data.json") as json_file:
+with open("data/genshindata.json") as json_file:
     __genshin_data = json.load(json_file)
 
 if __genshin_data =='':
