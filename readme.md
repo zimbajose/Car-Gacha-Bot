@@ -36,8 +36,14 @@ Returns the best main stats for the, sands, chalice and circlet for the characte
 
 ## Car gacha
 This bot has a car gacha function, in which you can roll for random cars.
-## Rolls for a random car
+
+### Gacha command
     $car gacha
+Rolls for a random car
+
+### List command
+    #car garage
+Shows all the cars that the user has obtained
 ## Other links
 
 ### The datasets i used for gathering the cars

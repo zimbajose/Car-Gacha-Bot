@@ -1,3 +1,4 @@
+from __future__ import annotations
 import mysql.connector
 import ddbconnector
 class User:
@@ -8,7 +9,7 @@ class User:
 
     #Searches for the user's tag in the database, if it does not find it it will then insert it, in both cases returns the a user object
     @staticmethod
-    def search_user(tag):
+    def search_user(tag : str)-> User:
         connector = ddbconnector.get_connection()
         cursor = connector.cursor()
 

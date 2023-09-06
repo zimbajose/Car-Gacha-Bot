@@ -19,7 +19,7 @@ def __check_character(character):
 
 
 #Treats all the functions that come from a message event
-async def message(message):
+async def message(message : discord.Message):
     commands = message.content.split(" ")
     
     if(len(commands)==1):
@@ -49,14 +49,14 @@ async def message(message):
 
 
 #Get stats function
-async def __send_stats(character,channel):
+async def __send_stats(character : str,channel):
     embed_stats = discord.Embed()
     embed_stats.title = "Best stats"
     embed_stats.description = "Sands: "+__genshin_data[character]['best_stats']['sands']+"\nGoblet: "+__genshin_data[character]['best_stats']['goblet'] +"\nCirclet: "+__genshin_data[character]['best_stats']['circlet']+"\nSubstats: "+__genshin_data[character]['best_stats']['substats']
     await channel.send(embed = embed_stats)
     
 
-async def __send_info(character,channel):
+async def __send_info(character : str,channel):
     embed_info = discord.Embed()
     embed_info.description=(__genshin_data[character]['info']['weapon']+" user")
     embed_info.set_footer(text = "Element",icon_url=__genshin_data[character]['info']['element'])
@@ -64,14 +64,14 @@ async def __send_info(character,channel):
     await channel.send(embed=embed_info)
 
 
-async def __send_weapons(character,channel):
+async def __send_weapons(character : str,channel):
     for weapon in __genshin_data[character]['best_weapons']:
         embed_weapon = discord.Embed()
         embed_weapon.set_image(url=weapon['img'])
         embed_weapon.title = weapon['name']
         await channel.send(embed=embed_weapon)
 
-async def __send_artifacts(character,channel):
+async def __send_artifacts(character : str,channel):
     i =1
     for artifacts_sets in __genshin_data[character]['best_artifacts']:
         await channel.send("Top "+str(i))
