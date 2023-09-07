@@ -8,8 +8,8 @@ import ddbconnector
 from datetime import datetime,timedelta
 class CarGacha:
     #Constants
-    __delay = 60 # in minutes
-    __got_car_message = "Congratulations author you have obtained a rarity car"
+    __delay = 0 # in minutes
+    __got_car_message = "Congratulations author you have obtained a brand car"
     __cars_list_message = "These are author's cars\n"
     __gacha_cooldown_message = "author you need to wait time minutes to roll again"
 
@@ -21,6 +21,15 @@ class CarGacha:
         4:"legendary",
         5:"Mythical"
     }
+    __color_codes = {
+        0: discord.Color.light_grey(),
+        1: discord.Color.teal(),
+        2: discord.Color.blue(),
+        3: discord.Color.dark_purple(),
+        4: discord.Color.orange(),
+        5: discord.Color.blurple()
+    }
+
     def __init__(self):
         pass
        
@@ -51,7 +60,9 @@ class CarGacha:
         user.set_time()
         embed_car = discord.Embed()
         embed_car.set_image(url=car.image_url)
-        text = CarGacha.__got_car_message.replace('car',car.model).replace('author',message.author.name).replace('rarity',CarGacha.__rarities[rarity])
+        embed_car.set_footer(text = CarGacha.__rarities[rarity])
+        embed_car.colour = CarGacha.__color_codes[rarity]
+        text = CarGacha.__got_car_message.replace('car',car.model).replace('author',message.author.name).replace('brand',car.brand)
         embed_car.description = text
         await message.channel.send(embed = embed_car)
 
