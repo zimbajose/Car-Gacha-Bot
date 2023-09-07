@@ -48,13 +48,15 @@ class CarGacha:
         car = Car.get_random_car(rarity)
         discord_tag = message.author.global_name
         user = shared.User.search_user(discord_tag)
-        time_to_next_roll = user.last_gacha + timedelta(minutes = CarGacha.__delay)
+        if user.last_gacha!=None:
+            time_to_next_roll = user.last_gacha + timedelta(minutes = CarGacha.__delay)
 
-        if time_to_next_roll>=datetime.now():
-            difference = time_to_next_roll - datetime.now()
-            cooldown_message = CarGacha.__gacha_cooldown_message.replace("author",message.author.display_name).replace("time",str(int(difference.total_seconds()/60)))
-            await message.channel.send(cooldown_message)
-            return
+            if time_to_next_roll>=datetime.now():
+                difference = time_to_next_roll - datetime.now()
+                cooldown_message = CarGacha.__gacha_cooldown_message.replace("author",message.author.display_name).replace("time",str(int(difference.total_seconds()/60)))
+                await message.channel.send(cooldown_message)
+                return
+        
         #Adds the car to the user's list
         car.add_owner(user)
         user.set_time()
@@ -102,13 +104,17 @@ class CarGacha:
 
 class Car:
 
-    def __init__(self,id : int,model : str,brand : str,price : float,image_url : str,rarity : int):
+    def __init__(self,id : int,model : str,brand : str,price : float,image_url : str,rarity : int,drive :str, horsepower : int, weight : int, torque : int):
         self.id = id
         self.model = model
         self.brand = brand
         self.price = price
         self.image_url = image_url
         self.rarity = rarity
+        self.drive = drive
+        self.horsepower = horsepower
+        self.weight = weight
+        self.torque = torque
 
     #Gets a car by id
     @staticmethod
@@ -116,7 +122,7 @@ class Car:
         cnx = ddbconnector.get_connection()
         cursor = cnx.cursor()
 
-        query = "SELECT id,model,brand,price,image_url,rarity FROM car WHERE id=%s"
+        query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque FROM car WHERE id=%s"
         cursor.execute(query,id)
         data = cursor.fetchone()
         if data== None:
@@ -127,11 +133,15 @@ class Car:
         price = data[3]
         image_url = data[4]
         rarity = data[5]
-        
+        drive = data[6]
+        horsepower = data[7]
+        weight = data[8]
+        torque = data[9]
+
         cursor.close()
         cnx.close()
 
-        return Car(id,model,brand,price,image_url,rarity)
+        return Car(id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque)
     
     #Gets a random car based on rarity
     @staticmethod
@@ -141,7 +151,7 @@ class Car:
 
         #If no rarity has been sent simply gets a random from all possible cars
         if rarity==None:
-            query = "SELECT id,model,brand,price,image_url,rarity FROM CAR ORDER BY RAND() LIMIT 1"
+            query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque FROM CAR ORDER BY RAND() LIMIT 1"
             cursor.execute(query)
             data = cursor.fetchone()
             if data==None:
@@ -155,12 +165,15 @@ class Car:
             price = data[3]
             image_url = data[4]
             rarity = data[5]
-
+            drive = data[6]
+            horsepower = data[7]
+            weight = data[8]
+            torque = data[9]
             cursor.close()
             cnx.close()
-            return Car(id,model,brand,price,image_url,rarity)
+            return Car(id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque)
 
-        query = "SELECT id,model,brand,price,image_url,rarity FROM CAR WHERE rarity= %(rarity)s ORDER BY RAND() LIMIT 1"
+        query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque FROM CAR WHERE rarity= %(rarity)s ORDER BY RAND() LIMIT 1"
         cursor.execute(query,{'rarity':rarity})
         data = cursor.fetchone()
         if data==None:
@@ -171,11 +184,15 @@ class Car:
         brand = data[2]
         price = data[3]
         image_url = data[4]
-        
+        rarity = data[5]
+        drive = data[6]
+        horsepower = data[7]
+        weight = data[8]
+        torque = data[9]
         cursor.close()
         cnx.close()
-        return Car(id,model,brand,price,image_url,rarity)
-    
+        return Car(id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque)
+
     #Adds a ownership of this car to the database
     def add_owner(self,user : shared.User):
         cnx = ddbconnector.get_connection()
@@ -197,7 +214,7 @@ class Car:
         cnx =ddbconnector.get_connection()
         cursor = cnx.cursor()
         
-        query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN discord_user u ON u.discordtag = %(user_tag)s"
+        query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity,c.drive,c.horsepower,c.weight,c.torque FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN discord_user u ON u.discord_tag = %(user_tag)s"
         data = {
             "user_tag": user.discord_tag
         }
@@ -212,7 +229,11 @@ class Car:
             price = car_raw[3]
             image_url = car_raw[4]
             rarity = car_raw[5]
-            car = Car(id,model,brand,price,image_url,rarity)
+            drive = car_raw[6]
+            horsepower = car_raw[7]
+            weight = car_raw[8]
+            torque = car_raw[9]
+            car = Car(id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque)
             cars.append(car)
 
         cursor.close()

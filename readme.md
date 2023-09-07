@@ -42,7 +42,7 @@ This bot has a car gacha function, in which you can roll for random cars.
 Rolls for a random car
 
 ### List command
-    #car garage
+    $car list
 Shows all the cars that the user has obtained
 ## Other links
 
