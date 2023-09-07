@@ -5,12 +5,13 @@ import discord
 import shared
 import mysql.connector
 import ddbconnector
-
+from datetime import datetime,timedelta
 class CarGacha:
     #Constants
-    __delay = 60
+    __delay = 60 # in minutes
     __got_car_message = "Congratulations author you have obtained a rarity car"
     __cars_list_message = "These are author's cars\n"
+    __gacha_cooldown_message = "author you need to wait time minutes to roll again"
 
     __rarities = {
         0:"common",
@@ -38,9 +39,16 @@ class CarGacha:
         car = Car.get_random_car(rarity)
         discord_tag = message.author.global_name
         user = shared.User.search_user(discord_tag)
+        time_to_next_roll = user.last_gacha + timedelta(minutes = CarGacha.__delay)
+
+        if time_to_next_roll>=datetime.now():
+            difference = time_to_next_roll - datetime.now()
+            cooldown_message = CarGacha.__gacha_cooldown_message.replace("author",message.author.display_name).replace("time",str(int(difference.total_seconds()/60)))
+            await message.channel.send(cooldown_message)
+            return
         #Adds the car to the user's list
         car.add_owner(user)
-
+        user.set_time()
         embed_car = discord.Embed()
         embed_car.set_image(url=car.image_url)
         text = CarGacha.__got_car_message.replace('car',car.model).replace('author',message.author.name).replace('rarity',CarGacha.__rarities[rarity])
@@ -55,11 +63,14 @@ class CarGacha:
         if len(cars)==0:
             await message.channel.send("It seems you have no cars, use the $car gacha command to roll for a random car")
             return
-        cars_list_message = CarGacha.__cars_list_message.replace('author',message.author.display_name)
+        cars_list = ""
         for car in cars:
-            cars_list_message = cars_list_message+ " "+car.model + "\n"
+            cars_list = cars_list+"\n "+car.model
+        embed = discord.Embed()
+        embed.title = CarGacha.__cars_list_message.replace('author',message.author.display_name)
+        embed.description = cars_list
+        await message.channel.send(embed = embed)
 
-        await message.channel.send(cars_list_message)
     #Gets a random rarity
     def __get_random_rarity(self):
         rand = random.randint(1,1000)

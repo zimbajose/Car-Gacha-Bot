@@ -1,6 +1,7 @@
 from __future__ import annotations
 import mysql.connector
 import ddbconnector
+from datetime import datetime
 class User:
 
     def __init__(self,tag : str,last_gacha = None):
@@ -17,7 +18,6 @@ class User:
         cursor.execute(query,{'tag':tag})
        
         data = cursor.fetchone()
-        print(data)
         if data == None:
             insert = "INSERT INTO discord_user(discordtag) VALUES(%(tag)s)"
             cursor.execute(insert,{"tag":tag})
@@ -31,3 +31,17 @@ class User:
         cursor.close()
         connector.close()
         return User(tag,last_gacha)
+    
+    #Sets the gacha time for this user to now
+    def set_time(self):
+        connector = ddbconnector.get_connection()
+        cursor = connector.cursor()
+        update = "UPDATE discord_user SET last_gacha = %(last_gacha)s WHERE discordtag = %(discordtag)s"
+        data = {
+            "last_gacha": datetime.now(),
+            "discordtag": self.discord_tag
+        }
+        cursor.execute(update,data)
+        connector.commit()
+        cursor.close()
+        connector.close()
