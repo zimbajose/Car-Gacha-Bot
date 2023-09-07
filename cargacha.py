@@ -29,6 +29,8 @@ class CarGacha:
         command = commands[1] if len(commands)>1 else "help"
         if command=='gacha':
             await self.__gacha_car(message)
+        if command=='list':
+            await self.__get_user_cars(message)
 
     #Sorts a random car from the list
     async def __gacha_car(self,message : discord.Message):
@@ -46,17 +48,18 @@ class CarGacha:
         await message.channel.send(embed = embed_car)
 
     #Sends the list of cars the user has
-    async def __get_user_Cars(self,message : discord.Message):
+    async def __get_user_cars(self,message : discord.Message):
         discord_tag = message.author.global_name
         user = shared.User.search_user(discord_tag)
         cars = Car.get_user_cars(user)
         if len(cars)==0:
             await message.channel.send("It seems you have no cars, use the $car gacha command to roll for a random car")
             return
-        cars_list_message = CarGacha.__cars_list_message
+        cars_list_message = CarGacha.__cars_list_message.replace('author',message.author.display_name)
         for car in cars:
             cars_list_message = cars_list_message+ " "+car.model + "\n"
 
+        await message.channel.send(cars_list_message)
     #Gets a random rarity
     def __get_random_rarity(self):
         rand = random.randint(1,1000)
@@ -162,7 +165,7 @@ class Car:
             "user_discordtag":user.discord_tag
         }
         cursor.execute(insert,data)
-
+        cnx.commit()
         cursor.close()
         cnx.close()
 
@@ -172,9 +175,9 @@ class Car:
         cnx =ddbconnector.get_connection()
         cursor = cnx.cursor()
         
-        query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN user u ON u.id = %(user_id)s"
+        query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN discord_user u ON u.discordtag = %(user_tag)s"
         data = {
-            "user_id": user.id
+            "user_tag": user.discord_tag
         }
         cursor.execute(query,data)
         cars_raw = cursor.fetchall()
