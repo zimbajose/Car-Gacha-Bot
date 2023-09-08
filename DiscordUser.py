@@ -46,3 +46,39 @@ class User:
         connector.commit()
         cursor.close()
         connector.close()
+
+    #Adds car_gacha money to the account
+    def add_money(self,money : float):
+        if money<0:
+            Exception("Cant add negative values, if you want to subtract muney use the subtract money function")
+
+        connector = ddbconnector.get_connection()
+        cursor = connector.cursor()
+        update = "UPDATE discord_user SET gacha_money = gacha_money + %(money)s"
+        data = {
+            "money":money
+        }
+        cursor.execute(update,data)
+        connector.commit()
+        cursor.close()
+        connector.close()
+
+    #Subtracts gacha_money from the account, the resulting value may not be negative, so it retuns true if it can subtract and false otherwise
+    def subtract_money(self,money:float) -> bool:
+        if money<0:
+            Exception("Value must be positive")
+        if self.gacha_money<money:
+            return False
+        
+        connector = ddbconnector.get_connection()
+        cursor = connector.cursor()
+
+        update = "UPDATE discord_user SET gacha_money = gacha_money - %(money)s"
+        data = {
+            "money":money
+        }
+        cursor.execute(update,data)
+        connector.commit()
+        cursor.close()
+        connector.close()
+        return True

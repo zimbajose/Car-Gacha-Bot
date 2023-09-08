@@ -1,49 +1,35 @@
-# Donte bot
-Donte is here to add some random functions to your discord server.
+# Car-gacha bot
+A fun little car gacha bot to satisfy your car lust
 
 ## Dependencies
 This bot requires the following libraries:
 
-- Selenium
-- Beautiful Soup 4
 - Discord py
 - Mysql connector
 
 Installation commands with pip:
 #####
-    pip install selenium
-    pip install beautifulsoup4
     pip install discord.py
     pip install mysql-connector-python
 
-## Genshin functions
-This bot has commands to display the best weapons and artifacts for genshin characters, obtained from genshin.gg.
-### General info
-    $genshin <character name>
-Returns basic character info, such as his weapon type, role, element, and character portrait.
 
-### Weapons
-    $genshin weapons <character name>
-Returns the best recommended weapons for the character.
-
-### Artifacts
-    $genshin artifacts <character name>
-Returns the best recommended artifact sets for the character.
-
-### Status
-    $genshin stats <nome do personagem>
-Returns the best main stats for the, sands, chalice and circlet for the character, and also the recommended substats for the character.
-
-## Car gacha
+## Gacha commands
 This bot has a car gacha function, in which you can roll for random cars.
 
 ### Gacha command
     $car gacha
 Rolls for a random car
 
-### List command
-    $car list
+## Car viewing commands
+
+### Garage command
+    $car garage
 Shows all the cars that the user has obtained
+
+### Search command
+    $car search <car name>
+Searches and displays a car. It will show a prompt with up to 5 cars with similar names, the user may use the reactions to awnser which car is to be displayed.
+
 ## Other links
 
 ### The datasets i used for gathering the cars

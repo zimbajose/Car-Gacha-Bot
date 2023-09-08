@@ -1,5 +1,4 @@
 import discord
-import Genshin
 import traceback
 from cargacha import CarGacha
 
@@ -21,14 +20,9 @@ async def on_message(message):
         return
     
     try:
-        #Genshin Functions
-        if message.content.startswith("$genshin"):
-            await Genshin.message(message)
-
         if message.content.startswith("$car"):
             await car_gacha.message(message)
 
-    
     except:
         await message.channel.send("An error occured")
         print(traceback.format_exc())
