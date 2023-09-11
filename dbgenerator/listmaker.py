@@ -44,15 +44,15 @@ with open("gran_turismo_gt6.csv",'r', encoding="utf-8") as cars_csv:
         #3 is epic
         #4 is legendary
         #5 is mythical
-        if price>=max_price/5:
+        if price>=1400000:
             rarity = 5
-        elif price>=max_price/20:
+        elif price>=500000:
             rarity = 4
-        elif price>=max_price/50:
+        elif price>=100000:
             rarity = 3
-        elif price>=max_price/320:
+        elif price>=50000:
             rarity =2
-        elif price>=max_price/600:
+        elif price>=20000:
             rarity = 1
         else:
             rarity = 0

@@ -51,7 +51,7 @@ class CarGacha:
         2: discord.Color.blue(),
         3: discord.Color.dark_purple(),
         4: discord.Color.orange(),
-        5: discord.Color.blurple()
+        5: discord.Color.gold()
     }
 
     def __init__(self):
