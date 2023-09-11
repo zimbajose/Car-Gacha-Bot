@@ -23,8 +23,8 @@ class Car:
         cnx = ddbconnector.get_connection()
         cursor = cnx.cursor()
 
-        query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque FROM car WHERE id=%s"
-        cursor.execute(query,id)
+        query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque FROM car WHERE id=%(id)s"
+        cursor.execute(query,{'id':id})
         data = cursor.fetchone()
         if data== None:
             return None
@@ -80,11 +80,12 @@ class Car:
         cnx = ddbconnector.get_connection()
         cursor = cnx.cursor()
 
-        select = "SELECT id,model,price,image_url,brand,rarity,drive,horsepower,weight,torque FROM car WHERE model LIKE %(prompt)s LIMIT %(amount)s"
+        select = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque FROM car WHERE model LIKE  %(prompt)s  LIMIT %(amount)s"
         data = {
-            "prompt": prompt,
+            "prompt": "%"+prompt+"%",
             "amount": amount
         }
+        cursor.execute(select,data)
         cars = Car.__generate_from_sql_data(cursor.fetchall())
 
         cursor.close()

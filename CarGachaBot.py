@@ -27,5 +27,13 @@ async def on_message(message):
         await message.channel.send("An error occured")
         print(traceback.format_exc())
 
+@client.event
+async def on_reaction_add(reaction,user):
+    #Verifies if the message is from the bot
+    if reaction.message.author ==client.user:
+        await car_gacha.react(reaction,user)
+
+
+
 token = open("token.txt",'r').read()
 client.run(token)
