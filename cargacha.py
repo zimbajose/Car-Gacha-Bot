@@ -9,7 +9,7 @@ from datetime import datetime,timedelta
 class CarGacha:
     #Constants
     __delay = 0 # in minutes
-    __got_car_message = "Congratulations author you have obtained a brand car"
+    __got_car_message = "Congratulations author you have obtained a brand year car"
     __cars_list_message = "These are author's cars\n"
     __gacha_cooldown_message = "author you need to wait time minutes to roll again"
     __search_command_help = "The correct usage of this command is $car search <car name>"
@@ -122,6 +122,10 @@ class CarGacha:
         embed_car.set_footer(text = CarGacha.__rarities[rarity])
         embed_car.colour = CarGacha.__color_codes[rarity]
         text = CarGacha.__got_car_message.replace('car',car.model).replace('author',author.name).replace('brand',car.brand)
+        if car.year!=None:
+            text.replace("year",str(car.year))
+        else:
+            text.replace("year","")
         embed_car.description = text
         await channel.send(embed = embed_car)
 
@@ -135,7 +139,10 @@ class CarGacha:
             return
         cars_list = ""
         for car in cars:
-            cars_list = cars_list+"\n "+car.model
+            if car.year!=None:
+                cars_list = cars_list+"\n "+str(car.year)+" "+car.model
+            else:
+                cars_list = cars_list+"\n "+car.model
         embed = discord.Embed()
         embed.title = CarGacha.__cars_list_message.replace('author',author.display_name)
         embed.description = cars_list
@@ -157,7 +164,10 @@ class CarGacha:
         list_embed.title = CarGacha.__search_list_title
         message_text = ""
         for car in cars:
-            message_text = message_text+"\n"+str(i)+". "+car.model
+            if car.year == None:
+                message_text = message_text+"\n"+str(i)+". "+car.model
+            else:
+                message_text = message_text+"\n"+str(i)+". "+str(car.year)+" "+car.model
         list_embed.description = message_text
         sent_message = await channel.send(embed= list_embed)
         await sent_message.add_reaction(CarGacha.Emojis.one)
@@ -196,7 +206,10 @@ class CarGacha:
     #Generates a embed with all the info of the selected car
     def __get_car_embed(self,car :Car)-> discord.Embed:
         car_embed = discord.Embed()
-        car_embed.title = car.model
+        if car.year!=None:
+            car_embed.title = str(car.year)+" "+car.model
+        else:
+            car_embed.title = car.model
         car_embed.set_image(url=car.image_url)
         car_embed.set_footer(text=car.brand)
         car_embed.colour = CarGacha.__color_codes[car.rarity]

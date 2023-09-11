@@ -5,7 +5,7 @@ import DiscordUser
 
 class Car:
 
-    def __init__(self,id : int,model : str,brand : str,price : float,image_url : str,rarity : int,drive :str, horsepower : int, weight : int, torque : int):
+    def __init__(self,id : int,model : str,brand : str,price : float,image_url : str,rarity : int,drive :str, horsepower : int, weight : int, torque : int,year:int):
         self.id = id
         self.model = model
         self.brand = brand
@@ -16,6 +16,7 @@ class Car:
         self.horsepower = horsepower
         self.weight = weight
         self.torque = torque
+        self.year = year
 
     #Gets a car by id
     @staticmethod
@@ -23,7 +24,7 @@ class Car:
         cnx = ddbconnector.get_connection()
         cursor = cnx.cursor()
 
-        query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque FROM car WHERE id=%(id)s"
+        query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque,car_year FROM car WHERE id=%(id)s"
         cursor.execute(query,{'id':id})
         data = cursor.fetchone()
         if data== None:
@@ -40,7 +41,7 @@ class Car:
 
         #If no rarity has been sent simply gets a random from all possible cars
         if rarity==None:
-            query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque FROM CAR ORDER BY RAND() LIMIT 1"
+            query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque,car_year FROM CAR ORDER BY RAND() LIMIT 1"
             cursor.execute(query)
             data = cursor.fetchone()
             if data==None:
@@ -49,7 +50,7 @@ class Car:
                 Exception("Database has no cars!")
             return Car.__generate_from_sql_data(data)
 
-        query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque FROM CAR WHERE rarity= %(rarity)s ORDER BY RAND() LIMIT 1"
+        query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque,car_year FROM CAR WHERE rarity= %(rarity)s ORDER BY RAND() LIMIT 1"
         cursor.execute(query,{'rarity':rarity})
         data = cursor.fetchone()
         if data==None:
@@ -63,7 +64,7 @@ class Car:
         cnx =ddbconnector.get_connection()
         cursor = cnx.cursor()
         
-        query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity,c.drive,c.horsepower,c.weight,c.torque FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN discord_user u ON u.discord_tag = %(user_tag)s"
+        query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity,c.drive,c.horsepower,c.weight,c.torque,c.car_year FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN discord_user u ON u.discord_tag = %(user_tag)s"
         data = {
             "user_tag": user.discord_tag
         }
@@ -80,7 +81,7 @@ class Car:
         cnx = ddbconnector.get_connection()
         cursor = cnx.cursor()
 
-        select = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque FROM car WHERE model LIKE  %(prompt)s  LIMIT %(amount)s"
+        select = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque,car_year FROM car WHERE model LIKE  %(prompt)s  LIMIT %(amount)s"
         data = {
             "prompt": "%"+prompt+"%",
             "amount": amount
@@ -106,7 +107,8 @@ class Car:
             horsepower = data[7]
             weight = data[8]
             torque = data[9]
-            return Car(id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque)
+            year = data[10]
+            return Car(id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque,year)
 
         if len(data)==0:
             return None
