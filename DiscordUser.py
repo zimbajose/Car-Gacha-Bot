@@ -54,9 +54,10 @@ class User:
 
         connector = ddbconnector.get_connection()
         cursor = connector.cursor()
-        update = "UPDATE discord_user SET gacha_money = gacha_money + %(money)s"
+        update = "UPDATE discord_user SET gacha_money = gacha_money + %(money)s WHERE discord_tag = %(id)s"
         data = {
-            "money":money
+            "money":money,
+            "id" : self.discord_tag
         }
         cursor.execute(update,data)
         connector.commit()
@@ -73,9 +74,10 @@ class User:
         connector = ddbconnector.get_connection()
         cursor = connector.cursor()
 
-        update = "UPDATE discord_user SET gacha_money = gacha_money - %(money)s"
+        update = "UPDATE discord_user SET gacha_money = gacha_money - %(money)s WHERE discord_tag = %(id)s"
         data = {
-            "money":money
+            "money":money,
+            "id":self.discord_tag
         }
         cursor.execute(update,data)
         connector.commit()

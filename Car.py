@@ -40,7 +40,7 @@ class Car:
         cursor = cnx.cursor()
 
         #If no rarity has been sent simply gets a random from all possible cars
-        if rarity==None:
+        if rarity!=None:
             query = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque,car_year FROM CAR ORDER BY RAND() LIMIT 1"
             cursor.execute(query)
             data = cursor.fetchone()
@@ -95,7 +95,7 @@ class Car:
 
     #Generates the car from sql return data, returns a list if there are multiple rows, or a car if there is only one
     @staticmethod
-    def __generate_from_sql_data(data : list):
+    def __generate_from_sql_data(data : list)-> Car:
         def __bind_data(data):
             id = data[0]
             model = data[1]
@@ -121,6 +121,25 @@ class Car:
             return cars
         
         return __bind_data(data)
+
+    #Checks if the user has this car in his garage, returns true if yes false if no
+    def check_owner(self,user :DiscordUser.User)-> bool:
+        cnx = ddbconnector.get_connection()
+        cursor =cnx.cursor()
+        select = "SELECT cp.id FROM car_possession cp JOIN discord_user du ON du.discord_tag = cp.user_discordtag JOIN car c ON c.id = cp.car_id WHERE c.id = %(id)s AND du.discord_tag = %(tag)s"
+        data = {
+            "id":self.id,
+            "tag":user.discord_tag
+            }
+        cursor.execute(select,data)
+        possession = cursor.fetchall()
+        if len(possession)==0:
+            cursor.close()
+            cnx.close()
+            return False
+        cursor.close()
+        cnx.close()
+        return True
 
     #Adds a ownership of this car to the database
     def add_owner(self,user : DiscordUser.User):

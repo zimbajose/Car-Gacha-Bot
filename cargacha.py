@@ -15,6 +15,7 @@ class CarGacha:
     __search_command_help = "The correct usage of this command is $car search <car name>"
     __search_list_title = "Select the car you are looking for"
     __search_list_not_found = "No cars found with similar names"
+    __already_has_car_message = "You already have this car, selling for value credits"
     __sell_rate = 3 #The value that the price will be divided by when you sell the car
     
     #A message prompt to be reacted to
@@ -25,6 +26,7 @@ class CarGacha:
             self.response_func = response_func
             self.original_author = original_author #Author of the message that resulted in this prompt
             self.data = data
+        
     #The emojis used by the bot
     class Emojis:
         right_arrow = "➡️"
@@ -98,7 +100,6 @@ class CarGacha:
     def __clear_prompts(self,user : discord.User):
         self.active_prompts = list(filter(lambda a : a.original_author !=user,self.active_prompts))
 
-
     #Sorts a random car from the list
     async def __gacha_car(self,author : discord.User, channel : discord.channel):
         rarity  = self.__get_random_rarity()
@@ -114,8 +115,11 @@ class CarGacha:
                 await channel.send(cooldown_message)
                 return
         
-        #Adds the car to the user's list
-        car.add_owner(user)
+        has_car = car.check_owner(user)
+        #Checks if user already has the car otherwise it will sell it
+        if not has_car:
+            #Adds the car to the user's list
+            car.add_owner(user)
         user.set_time()
         embed_car = discord.Embed()
         embed_car.set_image(url=car.image_url)
@@ -128,7 +132,12 @@ class CarGacha:
             text.replace("year","")
         embed_car.description = text
         await channel.send(embed = embed_car)
-
+        if has_car:
+            sell_price = car.price/3
+            sell_message = CarGacha.__already_has_car_message.replace("value",str(sell_price))
+            user.add_money(sell_price)
+            await channel.send(sell_message)
+            
     #Sends the list of cars the user has
     async def __get_user_cars(self,author : discord.User, channel : discord.channel):
         discord_tag = author.global_name
