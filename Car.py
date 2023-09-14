@@ -58,16 +58,22 @@ class Car:
 
         return Car.__generate_from_sql_data(data)
     
-    #Gets all the cars of the user and returns them as a list
+    #Gets all the cars of the user and returns them as a list, if a prompt is sent it will then try to search by name
     @staticmethod
-    def get_user_cars(user : DiscordUser.User)->list:
+    def get_user_cars(user : DiscordUser.User, prompt :str = None)->list:
         cnx =ddbconnector.get_connection()
         cursor = cnx.cursor()
-        
-        query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity,c.drive,c.horsepower,c.weight,c.torque,c.car_year FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN discord_user u ON u.discord_tag = %(user_tag)s"
-        data = {
-            "user_tag": user.discord_tag
-        }
+        if prompt ==None:
+            query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity,c.drive,c.horsepower,c.weight,c.torque,c.car_year FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN discord_user u ON u.discord_tag = %(user_tag)s"
+            data = {
+                "user_tag": user.discord_tag
+            }
+        else:
+            query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity,c.drive,c.horsepower,c.weight,c.torque,c.car_year FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN discord_user u ON u.discord_tag = %(user_tag)s WHERE c.name LIKE %(prompt)s"
+            data = {
+                "user_tag":user.discord_tag,
+                "prompt":prompt
+            }
         cursor.execute(query,data)
         cars_raw = cursor.fetchall()
         cars = Car.__generate_from_sql_data(cars_raw)
@@ -75,7 +81,7 @@ class Car:
         cnx.close()
         return cars
     
-     #Searches for a x number of cars based on the sent string
+    #Searches for a x number of cars based on the sent string
     @staticmethod
     def search_cars(prompt : str,amount : int = 5) ->list:
         cnx = ddbconnector.get_connection()

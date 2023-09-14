@@ -3,9 +3,11 @@ from __future__ import annotations
 import random
 import discord
 import DiscordUser
-
 from Car import Car
 from datetime import datetime,timedelta
+#Imports the prompts
+from prompts import Message_Prompt
+
 class CarGacha:
     #Constants
     __delay = 0 # in minutes
@@ -18,14 +20,7 @@ class CarGacha:
     __already_has_car_message = "You already have this car, selling for value credits"
     __sell_rate = 3 #The value that the price will be divided by when you sell the car
     
-    #A message prompt to be reacted to
-    class Message_Prompt:
-
-        def __init__(self,message : discord.Message,original_author : discord.User,response_func : function,data : any = None):
-            self.message = message
-            self.response_func = response_func
-            self.original_author = original_author #Author of the message that resulted in this prompt
-            self.data = data
+    
         
     #The emojis used by the bot
     class Emojis:
