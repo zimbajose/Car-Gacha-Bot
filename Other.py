@@ -1,8 +1,27 @@
 from __future__ import annotations
+from threading import Timer
 import discord
 
+
+#The prompt lsit
+class PromptList:
+    __TIMEOUT_DELAY = 0
+
+    def __init__(self):
+        self.list = []
+    def __timeout(self,prompt:MessagePrompt):
+        pass
+    
+    def add(self, prompt : MessagePrompt):
+        #Creates a timer to try to remove the prompt on timeout
+        t = Timer(self.__timeout,prompt)
+
+
+    def remove(self,prompt : MessagePrompt)-> bool:
+        return True
+    
 #A message prompt to be reacted to
-class Message_Prompt:
+class MessagePrompt:
 
     def __init__(self,message : discord.Message,original_author : discord.User,callback : function ,data : any = None):
         self.message = message
@@ -13,15 +32,15 @@ class Message_Prompt:
 
 #The emojis used by the bot
 class Emojis:
-    right_arrow = "➡️"
-    left_arrow = "⬅️"
-    one = "1️⃣"
-    two = "2️⃣"
-    three = "3️⃣"
-    four = "4️⃣"
-    five = "5️⃣"
-    accept = "✅"
-    decline = "❌"
+    RIGHT_ARROW = "➡️"
+    LEFT_ARROW = "⬅️"
+    ONE = "1️⃣"
+    TWO = "2️⃣"
+    THREE = "3️⃣"
+    FOUR = "4️⃣"
+    FIVE = "5️⃣"
+    ACCEPT = "✅"
+    DECLINE = "❌"
 
 
 #Formats a number for better viewing, returns it as string

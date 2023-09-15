@@ -6,40 +6,40 @@ import DiscordUser
 from Car import Car
 from datetime import datetime,timedelta
 #Imports the prompts
-from Other import Message_Prompt
+from Other import MessagePrompt
 from Other import Emojis
 from Other import format_number
 
 class CarGacha:
     #Constants
-    __delay = 0 # in minutes
-    __sell_rate = 3 #The value that the price will be divided by when you sell the car
+    __DELAY = 0 # in minutes
+    __SELL_RATE = 3 #The value that the price will be divided by when you sell the car
    
     #Car garage command
-    __cars_list_message = "These are author's cars\n"
+    __CARS_LIST_MESSAGE = "These are author's cars\n"
    
     #Car sell command
-    __sell_no_cars_found = "No cars found on your list of this model for selling."
-    __sell_confirmation_title = "Are you sure?"
-    __sell_confirmation_description = "Your year model will be sold for price credits, this action cannot be undone."
-    __sell_confirmed_text = "You sold your model for price credits."
-    __sell_declined_text = "You decided to not sell your model."
+    __SELL_NO_CARS_FOUND = "No cars found on your list of this model for selling."
+    __SELL_CONFIRMATION_TITLE = "Are you sure?"
+    __SELL_CONFIRMATION_DESCRIPTION = "Your year model will be sold for price credits, this action cannot be undone."
+    __SELL_CONFIRMED_TEXT = "You sold your model for price credits."
+    __SELL_DECLINED_TEXT = "You decided to not sell your model."
     #Car gacha command
-    __already_has_car_message = "You already have this car, selling for value credits"
-    __gacha_cooldown_message = "author you need to wait time minutes to roll again"
-    __got_car_message = "Congratulations author you have obtained a brand year car"
+    __ALREADY_HAS_CAR_MESSAGE = "You already have this car, selling for value credits"
+    __GACHA_COOLDOWN_MESSAGE = "author you need to wait time minutes to roll again"
+    __GOT_CAR_MESSAGE = "Congratulations author you have obtained a brand year car"
 
     #User balance
-    __user_balance_message = "author you have money CR on your account."
+    __USER_BALANCE_MESSAGE = "author you have money CR on your account."
 
     #Help texts
-    __sell_command_help = "The correct usage of this command is $car sell <car model>"
-    __search_command_help = "The correct usage of this command is $car search <car name>"
+    __SELL_COMMAND_HELP = "The correct usage of this command is $car sell <car model>"
+    __SEARCH_COMMAND_HELP = "The correct usage of this command is $car search <car name>"
     
 
     #Search command
-    __search_list_title = "Select the car you are looking for"
-    __search_list_not_found = "No cars found with similar names"
+    __SEARCH_LIST_TITLE = "Select the car you are looking for"
+    __SEARCH_LIST_NOT_FOUND = "No cars found with similar names"
 
     #Rarity codes
     __rarities = {
@@ -78,7 +78,7 @@ class CarGacha:
             commands.pop(0)
             prompt = ""
             if len(commands)==0:
-                await message.channel.send(CarGacha.__search_command_help)
+                await message.channel.send(CarGacha.__SEARCH_COMMAND_HELP)
                 return
             for text in commands:
                 prompt = prompt+ text + " "
@@ -88,7 +88,7 @@ class CarGacha:
             commands.pop(0)
             prompt = ""
             if len(commands)==0:
-                await message.channel.send(CarGacha.__sell_command_help)
+                await message.channel.send(CarGacha.__SELL_COMMAND_HELP)
                 return
             for text in commands:
                 prompt = prompt+ text + " "
@@ -108,7 +108,11 @@ class CarGacha:
         if user !=selected_prompt.original_author:
             return
         #Calls function associated with prompt
-        await selected_prompt.callback(selected_prompt,reaction)
+        response = await selected_prompt.callback(selected_prompt,reaction)
+        #If response is true, will remove the prompt message and remove the prompt from the active prompts
+        if response:
+            self.active_prompts.remove(selected_prompt)
+            await selected_prompt.message.delete()
 
     #Clears all active prompts from the user
     def __clear_prompts(self,user : discord.User):
@@ -121,11 +125,11 @@ class CarGacha:
         discord_tag = author.global_name
         user = DiscordUser.User.search_user(discord_tag)
         if user.last_gacha!=None:
-            time_to_next_roll = user.last_gacha + timedelta(minutes = CarGacha.__delay)
+            time_to_next_roll = user.last_gacha + timedelta(minutes = CarGacha.__DELAY)
 
             if time_to_next_roll>=datetime.now():
                 difference = time_to_next_roll - datetime.now()
-                cooldown_message = CarGacha.__gacha_cooldown_message.replace("author",author.display_name).replace("time",str(int(difference.total_seconds()/60)))
+                cooldown_message = CarGacha.__GACHA_COOLDOWN_MESSAGE.replace("author",author.display_name).replace("time",str(int(difference.total_seconds()/60)))
                 await channel.send(cooldown_message)
                 return
         
@@ -139,7 +143,7 @@ class CarGacha:
         embed_car.set_image(url=car.image_url)
         embed_car.set_footer(text = CarGacha.__rarities[rarity])
         embed_car.colour = CarGacha.__color_codes[rarity]
-        text = CarGacha.__got_car_message.replace('car',car.model).replace('author',author.name).replace('brand',car.brand)
+        text = CarGacha.__GOT_CAR_MESSAGE.replace('car',car.model).replace('author',author.name).replace('brand',car.brand)
         if car.year!=None:
             text.replace("year",str(car.year))
         else:
@@ -148,14 +152,14 @@ class CarGacha:
         await channel.send(embed = embed_car)
         if has_car:
             sell_price = car.price/3
-            sell_message = CarGacha.__already_has_car_message.replace("value",format_number(sell_price))
+            sell_message = CarGacha.__ALREADY_HAS_CAR_MESSAGE.replace("value",format_number(sell_price))
             user.add_money(sell_price)
             await channel.send(sell_message)
 
     #Checks the user's balance
     async def __get_user_balance(self,author: discord.User,channel : discord.TextChannel):
         user = DiscordUser.User.search_user(author.global_name)
-        message_text = CarGacha.__user_balance_message.replace("money",format_number(user.gacha_money))
+        message_text = CarGacha.__USER_BALANCE_MESSAGE.replace("money",format_number(user.gacha_money))
         await channel.send(message_text)
 
     #Sends the list of cars the user has
@@ -173,16 +177,15 @@ class CarGacha:
             else:
                 cars_list = cars_list+"\n "+car.model
         embed = discord.Embed()
-        embed.title = CarGacha.__cars_list_message.replace('author',author.display_name)
+        embed.title = CarGacha.__CARS_LIST_MESSAGE.replace('author',author.display_name)
         embed.description = cars_list
         await channel.send(embed = embed)
     
     #Searches for a car by name, sends a embed when there is only one with similar name, if there are multiple matches it sends a prompt to select one of them with reactions
     async def __search_for_car(self,author : discord.User,channel : discord.TextChannel ,prompt : str):
-        self.__clear_prompts(author)#Clear previous user prompts
         cars = Car.search_cars(prompt)
         if cars == None:
-            await channel.send(CarGacha.__search_list_not_found)
+            await channel.send(CarGacha.__SEARCH_LIST_NOT_FOUND)
             return
         if len(cars) ==1:
             car_embed = self.__get_car_embed(cars[0])
@@ -192,15 +195,14 @@ class CarGacha:
 
     #Searches for the car model in the user's cars, then send a prompt for the user to select the car he wants to sell
     async def __search_car_to_sell(self,author : discord.User,channel : discord.TextChannel, prompt : str):
-        self.__clear_prompts(author)
         if prompt == "":
-            await channel.send(CarGacha.__sell_command_help)
+            await channel.send(CarGacha.__SELL_COMMAND_HELP)
             return
         user = DiscordUser.User.search_user(author.global_name)
         cars = Car.get_user_cars(user,prompt)
         #Checks the length, if its 0 will say it found no cars, if 1 it will send the confimartion prompt
         if cars == None:
-            await channel.send(CarGacha.__sell_no_cars_found)
+            await channel.send(CarGacha.__SELL_NO_CARS_FOUND)
             return
         elif len(cars)==1:
             await self.__send_sell_confirmation_prompt(None,cars[0],author,channel)
@@ -209,48 +211,42 @@ class CarGacha:
         await self.__send_car_select_prompt(channel,author,cars,self.__send_sell_confirmation_prompt)
 
     #Sends a confirmation prompt to see if the user really wants to sell the car
-    async def __send_sell_confirmation_prompt(self,message_prompt : Message_Prompt, car : Car, author : discord.User = None, channel : discord.TextChannel = None):
+    async def __send_sell_confirmation_prompt(self,message_prompt : MessagePrompt, car : Car, author : discord.User = None, channel : discord.TextChannel = None):
         if not message_prompt == None:
             channel = message_prompt.message.channel
             author = message_prompt.original_author
-            #Removes the prompt from the active prompts
-            self.active_prompts.remove(message_prompt)
-        #Clears the user's previous prompts
-        self.__clear_prompts(author)
-        sell_price = car.price/CarGacha.__sell_rate
-        description = CarGacha.__sell_confirmation_description.replace("year",str(car.year)).replace("model",str(car.model)).replace("price",format_number(sell_price))
+        sell_price = car.price/CarGacha.__SELL_RATE
+        description = CarGacha.__SELL_CONFIRMATION_DESCRIPTION.replace("year",str(car.year)).replace("model",str(car.model)).replace("price",format_number(sell_price))
         message_embed = discord.Embed()
-        message_embed.title = CarGacha.__sell_confirmation_title
+        message_embed.title = CarGacha.__SELL_CONFIRMATION_TITLE
         message_embed.description = description
         sent_message = await channel.send(embed = message_embed)
-        await sent_message.add_reaction(Emojis.accept)
-        await sent_message.add_reaction(Emojis.decline)
+        await sent_message.add_reaction(Emojis.ACCEPT)
+        await sent_message.add_reaction(Emojis.DECLINE)
 
-        new_prompt = Message_Prompt(sent_message,author,self.__sell_car,car)
+        new_prompt = MessagePrompt(sent_message,author,self.__sell_car,car)
         self.active_prompts.append(new_prompt)
+        return True
 
     #Sells or not the car based on the reply
-    async def __sell_car(self,message_prompt : Message_Prompt, reaction : discord.Reaction):
+    async def __sell_car(self,message_prompt : MessagePrompt, reaction : discord.Reaction):
         car = message_prompt.data
-        sell_price = car.price/CarGacha.__sell_rate
-        if reaction.emoji==Emojis.decline:
-            decline_message = CarGacha.__sell_declined_text.replace("model",car.model)
+        sell_price = car.price/CarGacha.__SELL_RATE
+        if reaction.emoji==Emojis.DECLINE:
+            decline_message = CarGacha.__SELL_DECLINED_TEXT.replace("model",car.model)
             await message_prompt.message.channel.send(decline_message)
-        elif reaction.emoji == Emojis.accept:
-            accept_message = CarGacha.__sell_confirmed_text.replace("model",car.model).replace("price",format_number(sell_price))
+            return True
+        if reaction.emoji == Emojis.ACCEPT:
+            accept_message = CarGacha.__SELL_CONFIRMED_TEXT.replace("model",car.model).replace("price",format_number(sell_price))
             user = DiscordUser.User.search_user(message_prompt.original_author.global_name)
             car.remove_owner(user)
             user.add_money(sell_price)
             await message_prompt.message.channel.send(accept_message)
-
-        #Removes the prompt from the active prompts
-        try:
-            self.active_prompts.remove(message_prompt)
-        except:
-            pass
+            return True
+        return False
 
     #Sends a car embed
-    async def __send_embed(self,message_prompt : Message_Prompt,car : Car):
+    async def __send_embed(self,message_prompt : MessagePrompt,car : Car):
         
         car_embed = self.__get_car_embed(car)
         await message_prompt.message.channel.send(embed = car_embed)
@@ -276,7 +272,7 @@ class CarGacha:
             Exception("Not enough cars to make a select prompt")
         i = 1
         list_embed = discord.Embed()
-        list_embed.title = CarGacha.__search_list_title
+        list_embed.title = CarGacha.__SEARCH_LIST_TITLE
         message_text = ""
         for car in cars:
             if car.year == None:
@@ -286,45 +282,41 @@ class CarGacha:
         list_embed.description = message_text
         
         sent_message = await channel.send(embed= list_embed)
-        await sent_message.add_reaction(Emojis.one)
-        await sent_message.add_reaction(Emojis.two)
+        await sent_message.add_reaction(Emojis.ONE)
+        await sent_message.add_reaction(Emojis.TWO)
         if len(cars)>2:
-            await sent_message.add_reaction(Emojis.three)
+            await sent_message.add_reaction(Emojis.THREE)
         if len(cars)>3:
-            await sent_message.add_reaction(Emojis.four)
+            await sent_message.add_reaction(Emojis.FOUR)
         if len(cars)>4:
-            await sent_message.add_reaction(Emojis.five)
+            await sent_message.add_reaction(Emojis.FIVE)
         data = {
             "cars":cars,
             "callback": callback 
         }
-        new_message_prompt = Message_Prompt(sent_message,author,self.__select_car_prompt,data)
+        new_message_prompt = MessagePrompt(sent_message,author,self.__select_car_prompt,data)
         self.active_prompts.append(new_message_prompt)
 
     #Returns the car from a selected prompt on the callback
-    async def __select_car_prompt(self,message_prompt : Message_Prompt,reaction: discord.reaction):
+    async def __select_car_prompt(self,message_prompt : MessagePrompt,reaction: discord.reaction):
         cars = message_prompt.data['cars']
         #Checks for the reaction sent and sets the car based on the data sent
-        if reaction.emoji == Emojis.one and len(cars)>0:
+        if reaction.emoji == Emojis.ONE and len(cars)>0:
             car =cars[0]
-        elif reaction.emoji == Emojis.two and len(cars)>1:
+        elif reaction.emoji == Emojis.TWO and len(cars)>1:
             car = cars[1]
-        elif reaction.emoji == Emojis.three and len(cars)>2:
+        elif reaction.emoji == Emojis.THREE and len(cars)>2:
             car = cars[2]
-        elif reaction.emoji == Emojis.four and len(cars)>3:
+        elif reaction.emoji == Emojis.FOUR and len(cars)>3:
             car = cars[3]
-        elif reaction.emoji == Emojis.five and len(cars)>4:
+        elif reaction.emoji == Emojis.FIVE and len(cars)>4:
             car = cars[4]
         else:
-            return
+            return False
         #Obtains the car based on the id
         car = Car.get_car_by_id(car.id)
         await message_prompt.data['callback'](message_prompt,car)
-        #Removes prompt from list
-        try:
-            self.active_prompts.remove(message_prompt)
-        except:
-            pass
+        return True
 
     #Gets a random rarity
     def __get_random_rarity(self) ->int:
