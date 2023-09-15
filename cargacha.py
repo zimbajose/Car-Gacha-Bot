@@ -9,6 +9,7 @@ from datetime import datetime,timedelta
 from Other import MessagePrompt
 from Other import Emojis
 from Other import format_number
+from Other import PromptList
 
 class CarGacha:
     #Constants
@@ -61,7 +62,7 @@ class CarGacha:
     }
 
     def __init__(self):
-        self.active_prompts = []
+        self.active_prompts = PromptList()
        
     #Handles all events that come from a message
     async def message(self,message : discord.Message):
@@ -97,11 +98,7 @@ class CarGacha:
     #Handles all events tha come from reactions
     async def react(self,reaction:discord.Reaction, user: discord.User):
         #Verifies if the message is in the active prompts list
-        selected_prompt = None
-        for message_prompt in self.active_prompts:
-            if reaction.message == message_prompt.message:
-                selected_prompt = message_prompt
-                break
+        selected_prompt = self.active_prompts.find_by_message(reaction.message)
         if selected_prompt == None:
             return
         #Verifies if the user is author of the original prompt
@@ -111,12 +108,7 @@ class CarGacha:
         response = await selected_prompt.callback(selected_prompt,reaction)
         #If response is true, will remove the prompt message and remove the prompt from the active prompts
         if response:
-            self.active_prompts.remove(selected_prompt)
-            await selected_prompt.message.delete()
-
-    #Clears all active prompts from the user
-    def __clear_prompts(self,user : discord.User):
-        self.active_prompts = list(filter(lambda a : a.original_author !=user,self.active_prompts))
+            await self.active_prompts.remove(selected_prompt)
 
     #Sorts a random car from the list
     async def __gacha_car(self,author : discord.User, channel : discord.TextChannel):
@@ -225,7 +217,7 @@ class CarGacha:
         await sent_message.add_reaction(Emojis.DECLINE)
 
         new_prompt = MessagePrompt(sent_message,author,self.__sell_car,car)
-        self.active_prompts.append(new_prompt)
+        await self.active_prompts.add(new_prompt)
         return True
 
     #Sells or not the car based on the reply
@@ -295,7 +287,7 @@ class CarGacha:
             "callback": callback 
         }
         new_message_prompt = MessagePrompt(sent_message,author,self.__select_car_prompt,data)
-        self.active_prompts.append(new_message_prompt)
+        await self.active_prompts.add(new_message_prompt)
 
     #Returns the car from a selected prompt on the callback
     async def __select_car_prompt(self,message_prompt : MessagePrompt,reaction: discord.reaction):

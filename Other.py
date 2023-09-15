@@ -1,24 +1,58 @@
 from __future__ import annotations
-from threading import Timer
+import asyncio
 import discord
 
 
 #The prompt lsit
 class PromptList:
-    __TIMEOUT_DELAY = 0
+    __TIMEOUT_DELAY = 60
 
     def __init__(self):
         self.list = []
-    def __timeout(self,prompt:MessagePrompt):
-        pass
     
-    def add(self, prompt : MessagePrompt):
+    async def __timeout(self,prompt:MessagePrompt):
+        await asyncio.sleep(self.__TIMEOUT_DELAY)
+        await self.remove(prompt)
+    
+    #Find by prompt
+    def __find_by_prompt(self,prompt:MessagePrompt)-> dict:
+        for item in self.list:
+            if item['prompt'] == prompt:
+                return item
+        return None
+    
+    #Deletes all previous prompts from the user
+    async def __delete_all_from_user(self,user : discord.User):
+        for item in self.list:
+            if item['prompt'].original_author == user:
+                await self.remove(item['prompt'])
+                   
+
+    async def add(self, prompt : MessagePrompt):
+        await self.__delete_all_from_user(prompt.original_author)#Removes previous user prompts
         #Creates a timer to try to remove the prompt on timeout
-        t = Timer(self.__timeout,prompt)
+        timer = asyncio.ensure_future(self.__timeout(prompt))
+        data = {
+            "timer":timer,
+            "prompt" : prompt
+        }
+        self.list.append(data)
 
-
-    def remove(self,prompt : MessagePrompt)-> bool:
+    async def remove(self,prompt : MessagePrompt)-> bool:
+        data = self.__find_by_prompt(prompt)
+        if data == None:
+            return False
+        self.list.remove(data)
+        data['timer'].cancel()
+        print(data['prompt'].message.content)
+        await data['prompt'].message.delete()
         return True
+    #Finds a prompt by a message
+    def find_by_message(self,message : discord.Message) -> MessagePrompt:
+        for item in self.list:
+            if item['prompt'].message == message:
+                return item['prompt']
+        return None
     
 #A message prompt to be reacted to
 class MessagePrompt:
