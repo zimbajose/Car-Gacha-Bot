@@ -22,3 +22,17 @@ class Emojis:
     five = "5️⃣"
     accept = "✅"
     decline = "❌"
+
+
+#Formats a number for better viewing, returns it as string
+def format_number(number : float)-> str:
+    #First off rounds the number
+    number = round(number)
+    
+    if number>=1000000:
+        number = round(number/1000000,2)
+        return str(number) + "M"
+    if number >=100000:
+        number = round(number/1000,2)
+        return str(number) + "K"
+    return str(number)

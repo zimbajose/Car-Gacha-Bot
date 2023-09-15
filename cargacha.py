@@ -8,6 +8,7 @@ from datetime import datetime,timedelta
 #Imports the prompts
 from Other import Message_Prompt
 from Other import Emojis
+from Other import format_number
 
 class CarGacha:
     #Constants
@@ -87,6 +88,7 @@ class CarGacha:
             for text in commands:
                 prompt = prompt+ text + " "
             await self.__search_car_to_sell(message.author,message.channel,prompt)
+    
     #Handles all events tha come from reactions
     async def react(self,reaction:discord.Reaction, user: discord.User):
         #Verifies if the message is in the active prompts list
@@ -141,7 +143,7 @@ class CarGacha:
         await channel.send(embed = embed_car)
         if has_car:
             sell_price = car.price/3
-            sell_message = CarGacha.__already_has_car_message.replace("value",str(sell_price))
+            sell_message = CarGacha.__already_has_car_message.replace("value",format_number(sell_price))
             user.add_money(sell_price)
             await channel.send(sell_message)
             
@@ -205,7 +207,7 @@ class CarGacha:
         #Clears the user's previous prompts
         self.__clear_prompts(author)
         sell_price = car.price/CarGacha.__sell_rate
-        description = CarGacha.__sell_confirmation_description.replace("year",str(car.year)).replace("model",str(car.model)).replace("price",str(sell_price))
+        description = CarGacha.__sell_confirmation_description.replace("year",str(car.year)).replace("model",str(car.model)).replace("price",format_number(sell_price))
         message_embed = discord.Embed()
         message_embed.title = CarGacha.__sell_confirmation_title
         message_embed.description = description
@@ -224,14 +226,17 @@ class CarGacha:
             decline_message = CarGacha.__sell_declined_text.replace("model",car.model)
             await message_prompt.message.channel.send(decline_message)
         elif reaction.emoji == Emojis.accept:
-            accept_message = CarGacha.__sell_confirmed_text.replace("model",car.model).replace("price",str(sell_price))
+            accept_message = CarGacha.__sell_confirmed_text.replace("model",car.model).replace("price",format_number(sell_price))
             user = DiscordUser.User.search_user(message_prompt.original_author.global_name)
             car.remove_owner(user)
             user.add_money(sell_price)
             await message_prompt.message.channel.send(accept_message)
 
         #Removes the prompt from the active prompts
-        self.active_prompts.remove(message_prompt)
+        try:
+            self.active_prompts.remove(message_prompt)
+        except:
+            pass
 
     #Sends a car embed
     async def __send_embed(self,message_prompt : Message_Prompt,car : Car):
@@ -249,7 +254,7 @@ class CarGacha:
         car_embed.set_image(url=car.image_url)
         car_embed.set_footer(text=car.brand)
         car_embed.colour = CarGacha.__color_codes[car.rarity]
-        info = car.drive+"\n"+str(car.horsepower)+" hp\n"+str(car.weight)+" kg\n"+ str(car.torque) + " nm\ndefault price "+str(car.price)
+        info = car.drive+"\n"+str(car.horsepower)+" hp\n"+str(car.weight)+" kg\n"+ str(car.torque) + " nm\ndefault price "+format_number(car.price)+" CR"
         car_embed.description = info
 
         return car_embed
@@ -305,10 +310,13 @@ class CarGacha:
         car = Car.get_car_by_id(car.id)
         await message_prompt.data['callback'](message_prompt,car)
         #Removes prompt from list
-        self.active_prompts.remove(message_prompt)
+        try:
+            self.active_prompts.remove(message_prompt)
+        except:
+            pass
 
     #Gets a random rarity
-    def __get_random_rarity(self):
+    def __get_random_rarity(self) ->int:
         rand = random.randint(1,1000)
         if rand>=995:
             return 5
