@@ -16,6 +16,8 @@ class CarGacha:
     __cars_list_message = "These are author's cars\n"
     __gacha_cooldown_message = "author you need to wait time minutes to roll again"
     __search_command_help = "The correct usage of this command is $car search <car name>"
+    __sell_command_help = "The correct usage of this command is $car sell <car model>"
+    __sell_no_cars_found = "No cars found on your list of this model for selling."
     __search_list_title = "Select the car you are looking for"
     __search_list_not_found = "No cars found with similar names"
     __already_has_car_message = "You already have this car, selling for value credits"
@@ -85,7 +87,7 @@ class CarGacha:
         self.active_prompts = list(filter(lambda a : a.original_author !=user,self.active_prompts))
 
     #Sorts a random car from the list
-    async def __gacha_car(self,author : discord.User, channel : discord.channel):
+    async def __gacha_car(self,author : discord.User, channel : discord.TextChannel):
         rarity  = self.__get_random_rarity()
         car = Car.get_random_car(rarity)
         discord_tag = author.global_name
@@ -123,7 +125,7 @@ class CarGacha:
             await channel.send(sell_message)
             
     #Sends the list of cars the user has
-    async def __get_user_cars(self,author : discord.User, channel : discord.channel):
+    async def __get_user_cars(self,author : discord.User, channel : discord.TextChannel):
         discord_tag = author.global_name
         user = DiscordUser.User.search_user(discord_tag)
         cars = Car.get_user_cars(user)
@@ -142,7 +144,7 @@ class CarGacha:
         await channel.send(embed = embed)
     
     #Searches for a car by name, sends a embed when there is only one with similar name, if there are multiple matches it sends a prompt to select one of them with reactions
-    async def __search_for_car(self,author : discord.User,channel : discord.channel ,prompt : str):
+    async def __search_for_car(self,author : discord.User,channel : discord.TextChannel ,prompt : str):
         self.__clear_prompts(author)#Clear previous user prompts
         cars = Car.search_cars(prompt)
         if cars == None:
@@ -154,10 +156,33 @@ class CarGacha:
             return
         await self.__send_car_select_prompt(channel,author,cars,self.__send_embed)
 
+    #Searches for the car model in the user's cars, then send a prompt for the user to select the car he wants to sell
+    async def __search_car_to_sell(self,author : discord.User, channel : discord.TextChannel, prompt : str):
+        self.__clear_prompts(author)
+        if prompt == "":
+            channel.send(CarGacha.__sell_command_help)
+            return
+        user = DiscordUser.User.search_user(author.global_name)
+        cars = Car.get_user_cars(user,prompt)
+        #Checks the length, if its 0 will say it found no cars, if 1 it will send the confimartion prompt
+        if len(cars)==0:
+            channel.send(CarGacha.__sell_no_cars_found)
+            return
+        if len(cars ==1):
+            self.__send_sell_confirmation_prompt(cars[0],author,channel)
+            return
+        #Sends a select prompt with the callback for the sell confirmation prompt function
+        
+
+    #Sends a confirmation prompt to see if the user really wants to sell the car
+    async def __send_sell_confirmation_prompt(self,message_prompt : Message_Prompt, car : Car, author : discord.User = None, channel : discord.TextChannel = None):
+        pass
+
     #Sends a car embed
-    async def __send_embed(self,channel : discord.channel,car : Car):
+    async def __send_embed(self,message_prompt : Message_Prompt,car : Car):
+        
         car_embed = self.__get_car_embed(car)
-        await channel.send(embed = car_embed)
+        await message_prompt.message.channel.send(embed = car_embed)
 
     #Generates a embed with all the info of the selected car
     def __get_car_embed(self,car :Car)-> discord.Embed:
@@ -175,7 +200,7 @@ class CarGacha:
         return car_embed
     
     #Sends a car selection prompt
-    async def __send_car_select_prompt(self,channel : discord.channel,author : discord.User,cars : list,callback : function):
+    async def __send_car_select_prompt(self,channel : discord.TextChannel,author : discord.User,cars : list,callback : function):
         if len(cars)<2:
             Exception("Not enough cars to make a select prompt")
         i = 1
@@ -223,7 +248,7 @@ class CarGacha:
             return
         #Obtains the car based on the id
         car = Car.get_car_by_id(car.id)
-        await message_prompt.data['callback'](message_prompt.message.channel,car)
+        await message_prompt.data['callback'](message_prompt,car)
         #Removes prompt from list
         self.active_prompts.remove(message_prompt)
 
