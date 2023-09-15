@@ -6,7 +6,8 @@ import DiscordUser
 from Car import Car
 from datetime import datetime,timedelta
 #Imports the prompts
-from prompts import Message_Prompt
+from Other import Message_Prompt
+from Other import Emojis
 
 class CarGacha:
     #Constants
@@ -20,17 +21,6 @@ class CarGacha:
     __already_has_car_message = "You already have this car, selling for value credits"
     __sell_rate = 3 #The value that the price will be divided by when you sell the car
     
-    
-        
-    #The emojis used by the bot
-    class Emojis:
-        right_arrow = "➡️"
-        left_arrow = "⬅️"
-        one = "1️⃣"
-        two = "2️⃣"
-        three = "3️⃣"
-        four = "4️⃣"
-        five = "5️⃣"
 
     __rarities = {
         0:"common",
@@ -74,7 +64,7 @@ class CarGacha:
             await self.__search_for_car(message.author,message.channel,prompt)
     
 
-    #Handles all events tha come from reactoins
+    #Handles all events tha come from reactions
     async def react(self,reaction:discord.Reaction, user: discord.User):
         #Verifies if the message is in the active prompts list
         selected_prompt = None
@@ -87,9 +77,8 @@ class CarGacha:
         #Verifies if the user is author of the original prompt
         if user !=selected_prompt.original_author:
             return
-        #Removes prompt and calls function associated
-        await selected_prompt.response_func(selected_prompt,reaction)
-        self.active_prompts.remove(selected_prompt)
+        #Calls function associated with prompt
+        await selected_prompt.callback(selected_prompt,reaction)
 
     #Clears all active prompts from the user
     def __clear_prompts(self,user : discord.User):
@@ -163,49 +152,12 @@ class CarGacha:
             car_embed = self.__get_car_embed(cars[0])
             await channel.send(embed = car_embed)
             return
-        i = 1
-        list_embed = discord.Embed()
-        list_embed.title = CarGacha.__search_list_title
-        message_text = ""
-        for car in cars:
-            if car.year == None:
-                message_text = message_text+"\n"+str(i)+". "+car.model
-            else:
-                message_text = message_text+"\n"+str(i)+". "+str(car.year)+" "+car.model
-        list_embed.description = message_text
-        sent_message = await channel.send(embed= list_embed)
-        await sent_message.add_reaction(CarGacha.Emojis.one)
-        await sent_message.add_reaction(CarGacha.Emojis.two)
-        if len(cars)>2:
-            await sent_message.add_reaction(CarGacha.Emojis.three)
-        if len(cars)>3:
-            await sent_message.add_reaction(CarGacha.Emojis.four)
-        if len(cars)>4:
-            await sent_message.add_reaction(CarGacha.Emojis.five)
-        new_message_prompt = CarGacha.Message_Prompt(sent_message,author,self.__searched_car,cars)
-        self.active_prompts.append(new_message_prompt)
+        await self.__send_car_select_prompt(channel,author,cars,self.__send_embed)
 
-    #Responds to a search car prompt
-
-    async def __searched_car(self,message_prompt: CarGacha.Message_Prompt,reaction : discord.Reaction):
-        data = message_prompt.data
-        #Checks for the reaction sent and sets carname based on the reaction
-        if reaction.emoji == CarGacha.Emojis.one and len(data)>0:
-            car =data[0]
-        elif reaction.emoji == CarGacha.Emojis.two and len(data)>1:
-            car = data[1]
-        elif reaction.emoji == CarGacha.Emojis.three and len(data)>2:
-            car = data[2]
-        elif reaction.emoji == CarGacha.Emojis.four and len(data)>3:
-            car = data[3]
-        elif reaction.emoji == CarGacha.Emojis.five and len(data)>4:
-            car = data[4]
-        else:
-            return
-        #Obtains the car based on the id
-        car = Car.get_car_by_id(car.id)
+    #Sends a car embed
+    async def __send_embed(self,channel : discord.channel,car : Car):
         car_embed = self.__get_car_embed(car)
-        await message_prompt.message.channel.send(embed = car_embed)
+        await channel.send(embed = car_embed)
 
     #Generates a embed with all the info of the selected car
     def __get_car_embed(self,car :Car)-> discord.Embed:
@@ -221,6 +173,60 @@ class CarGacha:
         car_embed.description = info
 
         return car_embed
+    
+    #Sends a car selection prompt
+    async def __send_car_select_prompt(self,channel : discord.channel,author : discord.User,cars : list,callback : function):
+        if len(cars)<2:
+            Exception("Not enough cars to make a select prompt")
+        i = 1
+        list_embed = discord.Embed()
+        list_embed.title = CarGacha.__search_list_title
+        message_text = ""
+        for car in cars:
+            if car.year == None:
+                message_text = message_text+"\n"+str(i)+". "+car.model
+            else:
+                message_text = message_text+"\n"+str(i)+". "+str(car.year)+" "+car.model
+        list_embed.description = message_text
+        
+        sent_message = await channel.send(embed= list_embed)
+        await sent_message.add_reaction(Emojis.one)
+        await sent_message.add_reaction(Emojis.two)
+        if len(cars)>2:
+            await sent_message.add_reaction(Emojis.three)
+        if len(cars)>3:
+            await sent_message.add_reaction(Emojis.four)
+        if len(cars)>4:
+            await sent_message.add_reaction(Emojis.five)
+        data = {
+            "cars":cars,
+            "callback": callback 
+        }
+        new_message_prompt = Message_Prompt(sent_message,author,self.__select_car_prompt,data)
+        self.active_prompts.append(new_message_prompt)
+
+    #Returns the car from a selected prompt on the callback
+    async def __select_car_prompt(self,message_prompt : Message_Prompt,reaction: discord.reaction):
+        cars = message_prompt.data['cars']
+        #Checks for the reaction sent and sets the car based on the data sent
+        if reaction.emoji == Emojis.one and len(cars)>0:
+            car =cars[0]
+        elif reaction.emoji == Emojis.two and len(cars)>1:
+            car = cars[1]
+        elif reaction.emoji == Emojis.three and len(cars)>2:
+            car = cars[2]
+        elif reaction.emoji == Emojis.four and len(cars)>3:
+            car = cars[3]
+        elif reaction.emoji == Emojis.five and len(cars)>4:
+            car = cars[4]
+        else:
+            return
+        #Obtains the car based on the id
+        car = Car.get_car_by_id(car.id)
+        await message_prompt.data['callback'](message_prompt.message.channel,car)
+        #Removes prompt from list
+        self.active_prompts.remove(message_prompt)
+
     #Gets a random rarity
     def __get_random_rarity(self):
         rand = random.randint(1,1000)

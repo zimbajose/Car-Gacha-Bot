@@ -5,11 +5,11 @@ import csv
 import mysql.connector
 
 #Connects to the database
-cnx = mysql.connector.connect(user='root',host = '127.0.0.1',database = 'car_gacha')
+cnx = mysql.connector.connect(password = "123",user='root',host = '127.0.0.1',database = 'car_gacha')
 cursor = cnx.cursor()
 
 #Price of the most expensive car, this is used to define the rarity of the cars
-max_price = 20000000
+#max_price = 20000000
 
 with open("gran_turismo_gt6.csv",'r', encoding="utf-8") as cars_csv:
     cars = csv.reader(cars_csv,delimiter = ",")

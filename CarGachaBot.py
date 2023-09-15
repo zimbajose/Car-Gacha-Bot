@@ -1,6 +1,6 @@
 import discord
 import traceback
-from cargacha import CarGacha
+from CarGacha import CarGacha
 
 intents = discord.Intents.default()
 intents.message_content = True
