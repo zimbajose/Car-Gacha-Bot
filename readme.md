@@ -37,6 +37,11 @@ Searches and displays a car. It will show a prompt with up to 5 cars with simila
     $car sell <car name>
 It will search among the user's cars for cars of similar names, similar to the search command it will then send a prompt, that the user will use reactions to select one of the cars, after that it will send a confirmation prompt, if the user reacts with the checkbox the car will be removed from the user's possessions and money will be added to him.
 
+## Other commands
+
+### Balance command
+    #car balance
+This command will send the user's amount of gacha money that he has on chat.
 
 ## Other links
 

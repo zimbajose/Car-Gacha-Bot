@@ -29,6 +29,9 @@ class CarGacha:
     __gacha_cooldown_message = "author you need to wait time minutes to roll again"
     __got_car_message = "Congratulations author you have obtained a brand year car"
 
+    #User balance
+    __user_balance_message = "author you have money CR on your account."
+
     #Help texts
     __sell_command_help = "The correct usage of this command is $car sell <car model>"
     __search_command_help = "The correct usage of this command is $car search <car name>"
@@ -68,6 +71,8 @@ class CarGacha:
             await self.__gacha_car(message.author,message.channel)
         elif command=='garage':
             await self.__get_user_cars(message.author,message.channel)
+        elif command == 'balance':
+            await self.__get_user_balance(message.author,message.channel)
         elif command=='search':
             commands.pop(0)
             commands.pop(0)
@@ -146,7 +151,13 @@ class CarGacha:
             sell_message = CarGacha.__already_has_car_message.replace("value",format_number(sell_price))
             user.add_money(sell_price)
             await channel.send(sell_message)
-            
+
+    #Checks the user's balance
+    async def __get_user_balance(self,author: discord.User,channel : discord.TextChannel):
+        user = DiscordUser.User.search_user(author.global_name)
+        message_text = CarGacha.__user_balance_message.replace("money",format_number(user.gacha_money))
+        await channel.send(message_text)
+
     #Sends the list of cars the user has
     async def __get_user_cars(self,author : discord.User, channel : discord.TextChannel):
         discord_tag = author.global_name
