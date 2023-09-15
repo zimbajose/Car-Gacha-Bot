@@ -30,6 +30,14 @@ Shows all the cars that the user has obtained
     $car search <car name>
 Searches and displays a car. It will show a prompt with up to 5 cars with similar names, the user may use the reactions to awnser which car is to be displayed.
 
+
+## Car trading commands
+
+### Sell command
+    $car sell <car name>
+It will search among the user's cars for cars of similar names, similar to the search command it will then send a prompt, that the user will use reactions to select one of the cars, after that it will send a confirmation prompt, if the user reacts with the checkbox the car will be removed from the user's possessions and money will be added to him.
+
+
 ## Other links
 
 ### The datasets i used for gathering the cars

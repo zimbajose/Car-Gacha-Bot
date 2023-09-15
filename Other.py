@@ -20,3 +20,5 @@ class Emojis:
     three = "3️⃣"
     four = "4️⃣"
     five = "5️⃣"
+    accept = "✅"
+    decline = "❌"

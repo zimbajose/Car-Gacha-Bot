@@ -69,10 +69,10 @@ class Car:
                 "user_tag": user.discord_tag
             }
         else:
-            query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity,c.drive,c.horsepower,c.weight,c.torque,c.car_year FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN discord_user u ON u.discord_tag = %(user_tag)s WHERE c.name LIKE %(prompt)s"
+            query = "SELECT c.id,c.model,c.brand,c.price,c.image_url,c.rarity,c.drive,c.horsepower,c.weight,c.torque,c.car_year FROM car c JOIN car_possession cp ON c.id=cp.car_id JOIN discord_user u ON u.discord_tag = %(user_tag)s WHERE c.model LIKE %(prompt)s"
             data = {
                 "user_tag":user.discord_tag,
-                "prompt":prompt
+                "prompt":"%"+prompt+"%"
             }
         cursor.execute(query,data)
         cars_raw = cursor.fetchall()
@@ -167,12 +167,12 @@ class Car:
         cnx = ddbconnector.get_connection()
         cursor = cnx.cursor()
 
-        insert = "DELETE FROM car_possession WHERE car_id = %(car_id)s, AND user_discordtag = %(tag)s"
+        delete = "DELETE FROM car_possession WHERE car_id = %(car_id)s AND user_discordtag = %(tag)s"
         data = {
             "car_id": self.id,
             "tag":user.discord_tag
         }
-        cursor.execute(insert,data)
+        cursor.execute(delete,data)
         cnx.commit()
         cursor.close()
         cnx.close()
