@@ -135,7 +135,7 @@ class CarGacha:
         embed_car.set_image(url=car.image_url)
         embed_car.set_footer(text = CarGacha.__rarities[rarity])
         embed_car.colour = CarGacha.__color_codes[rarity]
-        text = CarGacha.__GOT_CAR_MESSAGE.replace('car',car.model).replace('author',author.name).replace('brand',car.brand)
+        text = CarGacha.__GOT_CAR_MESSAGE.replace('car',car.model).replace('author',author.name).replace('brand',car.brand_name)
         if car.year!=None:
             text.replace("year",str(car.year))
         else:
@@ -251,7 +251,7 @@ class CarGacha:
         else:
             car_embed.title = car.model
         car_embed.set_image(url=car.image_url)
-        car_embed.set_footer(text=car.brand)
+        car_embed.set_footer(text=car.brand_name)
         car_embed.colour = CarGacha.__color_codes[car.rarity]
         info = car.drive+"\n"+str(car.horsepower)+" hp\n"+str(car.weight)+" kg\n"+ str(car.torque) + " nm\ndefault price "+format_number(car.price)+" CR"
         car_embed.description = info
