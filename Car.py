@@ -86,12 +86,33 @@ class Car:
     def search_cars(prompt : str,amount : int = 5) ->list:
         cnx = ddbconnector.get_connection()
         cursor = cnx.cursor()
-
-        select = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque,car_year FROM car WHERE model LIKE  %(prompt)s  LIMIT %(amount)s"
-        data = {
-            "prompt": "%"+prompt+"%",
-            "amount": amount
-        }
+        prompt = prompt.casefold()#casefolds prompt
+        #Gets all the existing brands
+        select = "SELECT brand FROM car GROUP BY brand"
+        cursor.execute(select)
+        brands = cursor.fetchall()
+        selected_brand = None
+        #See if there is a brand name on the search prompt
+        for brand in brands:
+            if brand[0].casefold() in prompt:
+                prompt = prompt.replace(brand[0].casefold(),"").lstrip()#Removes the brand and left white spaces from the prompt
+                selected_brand = brand[0]
+                break
+        
+        if selected_brand == None:
+            select = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque,car_year FROM car WHERE model LIKE  %(prompt)s  LIMIT %(amount)s"
+            data = {
+                "prompt": "%"+prompt+"%",
+                "amount": amount
+            }
+        else:
+            select = "SELECT id,model,brand,price,image_url,rarity,drive,horsepower,weight,torque,car_year FROM car WHERE model LIKE %(prompt)s AND brand LIKE %(brand)s LIMIT %(amount)s"
+            data = {
+                "prompt": "%"+prompt+"%",
+                "brand": selected_brand,
+                "amount": amount
+            }
+        
         cursor.execute(select,data)
         cars = Car.__generate_from_sql_data(cursor.fetchall())
 
