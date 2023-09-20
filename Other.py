@@ -5,13 +5,20 @@ import discord
 
 #The prompt lsit
 class PromptList:
-    __TIMEOUT_DELAY = 60
+    __TIMEOUT_DELAY = 10
 
     def __init__(self):
         self.list = []
     
     async def __timeout(self,prompt:MessagePrompt):
         await asyncio.sleep(self.__TIMEOUT_DELAY)
+        if prompt.continue_run:
+            prompt.continue_run = False
+            prompt_dic = self.__find_by_prompt(prompt)
+            prompt_dic['timer'] = asyncio.ensure_future(self.__timeout(prompt))
+            return
+        elif prompt.timeout != None:
+            await prompt.timeout(prompt)
         await self.remove(prompt)
     
     #Find by prompt
@@ -31,6 +38,7 @@ class PromptList:
     async def add(self, prompt : MessagePrompt):
         await self.__delete_all_from_user(prompt.original_author)#Removes previous user prompts
         #Creates a timer to try to remove the prompt on timeout
+        
         timer = asyncio.ensure_future(self.__timeout(prompt))
         data = {
             "timer":timer,
@@ -40,11 +48,12 @@ class PromptList:
 
     async def remove(self,prompt : MessagePrompt)-> bool:
         data = self.__find_by_prompt(prompt)
+        
         if data == None:
             return False
         self.list.remove(data)
         data['timer'].cancel()
-        print(data['prompt'].message.content)
+        
         await data['prompt'].message.delete()
         return True
     #Finds a prompt by a message
@@ -57,17 +66,22 @@ class PromptList:
 #A message prompt to be reacted to
 class MessagePrompt:
 
-    def __init__(self,message : discord.Message,original_author : discord.User,callback : function ,data : any = None):
+    #If true will continue for one more cicle, without timing out.
+    continue_run = False
+
+    def __init__(self,message : discord.Message,original_author : discord.User,callback : function ,data : any = None, timeout : function = None):
         self.message = message
         self.callback = callback
         self.original_author = original_author #Author of the message that resulted in this prompt
         self.data = data
-
+        self.timeout = timeout
 
 #The emojis used by the bot
 class Emojis:
     RIGHT_ARROW = "➡️"
     LEFT_ARROW = "⬅️"
+    UP = "⬆️"
+    MORE_UP = "⏫"
     ONE = "1️⃣"
     TWO = "2️⃣"
     THREE = "3️⃣"
@@ -75,7 +89,7 @@ class Emojis:
     FIVE = "5️⃣"
     ACCEPT = "✅"
     DECLINE = "❌"
-
+    SAD = "☹️"
 
 #Formats a number for better viewing, returns it as string
 def format_number(number : float)-> str:

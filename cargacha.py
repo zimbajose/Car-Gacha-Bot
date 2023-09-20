@@ -30,6 +30,12 @@ class CarGacha:
     __GACHA_COOLDOWN_MESSAGE = "author you need to wait time minutes to roll again"
     __GOT_CAR_MESSAGE = "Congratulations author you have obtained a brand year car"
 
+    #Auction
+    __AUCTION_DESCRIPTION = "brand model is on a auction! current bid is price credits"
+    __AUCTION_TITLE= "A wild model appeared!"
+    __AUCTION_NOT_ENOUGH_MONEY_MESSAGE = "user, you do not have enough credits to bid in this car!"
+    __NO_BIDS_ON_AUCTION = "No one has bidded on the brand model. "+Emojis.SAD
+    __WON_AUCTION_MESSAGE = "Congratulations user, you obtained a brand model!"
     #User balance
     __USER_BALANCE_MESSAGE = "author you have money CR on your account."
 
@@ -94,21 +100,94 @@ class CarGacha:
             for text in commands:
                 prompt = prompt+ text + " "
             await self.__search_car_to_sell(message.author,message.channel,prompt)
-    
+        #Temporary code
+        elif command =='auction':
+            await self.__start__auction(message.author,message.channel)
     #Handles all events tha come from reactions
     async def react(self,reaction:discord.Reaction, user: discord.User):
         #Verifies if the message is in the active prompts list
         selected_prompt = self.active_prompts.find_by_message(reaction.message)
         if selected_prompt == None:
             return
-        #Verifies if the user is author of the original prompt
-        if user !=selected_prompt.original_author:
-            return
+
         #Calls function associated with prompt
         response = await selected_prompt.callback(selected_prompt,reaction)
-        #If response is true, will remove the prompt message and remove the prompt from the active prompts
+        #If response is true, will remove the prompt message and remove the prompt from the active prompts, if not it will reset the timeout timer.
         if response:
             await self.active_prompts.remove(selected_prompt)
+        else:
+            selected_prompt.continue_run = True
+
+    #Creates a auction embed
+    @staticmethod
+    def __get_auction_embed(car : Car,price : str, winning_bidder = None)->discord.Embed:
+        auction_embed = discord.Embed()
+        auction_embed.set_image(url = car.image_url)
+        auction_embed.color = CarGacha.__color_codes[car.rarity]
+        auction_embed.description = CarGacha.__AUCTION_DESCRIPTION.replace("brand",car.brand_name).replace("model",car.model).replace("price",price)
+        auction_embed.title = CarGacha.__AUCTION_TITLE.replace("model",car.model)
+        if not winning_bidder== None:
+            auction_embed.set_footer(text = "The winning bidder is "+winning_bidder)
+        return auction_embed
+    
+    #Starts a auction
+    async def __start__auction(self,author : discord.User, channel : discord.TextChannel):
+        #Gets a completly random car for the auction
+        car = Car.get_random_car()
+        start_price = float(car.price)/1.5
+        auction_embed = CarGacha.__get_auction_embed(car,format_number(start_price))
+        sent_message = await channel.send(embed= auction_embed)
+        await sent_message.add_reaction(Emojis.UP)
+        await sent_message.add_reaction(Emojis.MORE_UP)
+        data = {
+            "car":car,
+            "price":start_price
+        }
+        new_prompt = MessagePrompt(sent_message,author,self.__bid_on_auction,data,self.__end_auction)
+        await self.active_prompts.add(new_prompt)
+
+    #Called when a auction has been bidded on
+    async def __bid_on_auction(self,prompt : MessagePrompt, reaction : discord.Reaction):
+        if not (reaction.emoji == Emojis.UP or reaction.emoji == Emojis.MORE_UP):
+            return
+        car = prompt.data['car']
+        #Gets the last one that reacted
+        users = [user async for user in reaction.users()]
+        discord_user = users[len(users)-1]
+        bidded_user = DiscordUser.User.search_user(discord_user.global_name)
+        if reaction.emoji == Emojis.UP:
+            value_to_sum = (float(car.price)*0.2)
+        if reaction.emoji == Emojis.MORE_UP:
+            value_to_sum = (float(car.price)*0.4)
+        #Sends message to the user saying that he does not have enough credits.
+        if float(bidded_user.gacha_money)<float(prompt.data['price'])+value_to_sum:
+            if discord_user.dm_channel == None:
+                user_channel = await discord_user.create_dm()
+            else:
+                user_channel = discord_user.dm_channel
+            await user_channel.send(CarGacha.__AUCTION_NOT_ENOUGH_MONEY_MESSAGE.replace("user",bidded_user.discord_tag))
+        else:
+            prompt.data['price'] =(float(prompt.data['price'])+value_to_sum)
+            prompt.data['winningbidder'] = bidded_user
+            #Generates a new embed
+            embed = CarGacha.__get_auction_embed(car,format_number(prompt.data['price']),prompt.data['winningbidder'].discord_tag)
+            await prompt.message.edit(embed = embed)
+        #Removes the reaction that the user sent
+        await reaction.remove(discord_user)
+        return False
+        
+
+    #Called when a auction has ended
+    async def __end_auction(self,prompt:MessagePrompt):
+        car = prompt.data['car']
+        if not "winningbidder" in prompt.data.keys():
+            await prompt.message.channel.send(CarGacha.__NO_BIDS_ON_AUCTION.replace("brand",car.brand_name).replace("model",car.model))
+            return
+        winning_user = prompt.data["winningbidder"]
+        #Adds the car to the user and, and subtracts the money for him.
+        winning_user.subtract_money(prompt.data['price'])
+        car.add_owner(winning_user)
+        await prompt.message.channel.send(CarGacha.__WON_AUCTION_MESSAGE.replace("user",winning_user.discord_tag).replace("brand",car.brand_name).replace("model",car.model))
 
     #Sorts a random car from the list
     async def __gacha_car(self,author : discord.User, channel : discord.TextChannel):
@@ -224,6 +303,10 @@ class CarGacha:
     async def __sell_car(self,message_prompt : MessagePrompt, reaction : discord.Reaction):
         car = message_prompt.data
         sell_price = car.price/CarGacha.__SELL_RATE
+        #Checks if the user is the one who reacted
+        users = [user async for user in reaction.users()]
+        if not message_prompt.original_author in users:
+            return
         if reaction.emoji==Emojis.DECLINE:
             decline_message = CarGacha.__SELL_DECLINED_TEXT.replace("model",car.model)
             await message_prompt.message.channel.send(decline_message)
@@ -291,6 +374,9 @@ class CarGacha:
 
     #Returns the car from a selected prompt on the callback
     async def __select_car_prompt(self,message_prompt : MessagePrompt,reaction: discord.reaction):
+        users = [user async for user in reaction.users()]
+        if not message_prompt.original_author in users:
+            return
         cars = message_prompt.data['cars']
         #Checks for the reaction sent and sets the car based on the data sent
         if reaction.emoji == Emojis.ONE and len(cars)>0:
