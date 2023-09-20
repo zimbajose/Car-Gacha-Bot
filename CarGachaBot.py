@@ -1,5 +1,7 @@
+from __future__ import annotations
 import discord
 import traceback
+import asyncio
 from CarGacha import CarGacha
 
 intents = discord.Intents.default()
@@ -7,12 +9,15 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-car_gacha = CarGacha()
+car_gacha = CarGacha(client)
+
+
 
 @client.event
 async def on_ready():
     print(f'We have logged in as {client.user}')
-
+    #Starts the auction timer
+    await car_gacha.wait_for_auctions()
 @client.event
 async def on_message(message):
     

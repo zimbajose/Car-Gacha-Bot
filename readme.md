@@ -30,6 +30,21 @@ Shows all the cars that the user has obtained
     $car search <car name>
 Searches and displays a car. It will show a prompt with up to 5 cars with similar names, the user may use the reactions to awnser which car is to be displayed.
 
+## Auctions
+Periodically this bot will send auction messages, where users can bid for a random car, this auctions do do not have weights for car rarities, so getting a rare car in a auction is much more likely.
+There are a few steps for having auctions active in your server, you must first use the $car auction set command to choose a channel to host auctions, and then use the $car auction activate for your server to start receiving auctions.
+
+### Set command
+    $car auction set
+This command will set the current channel as host for auctions, if auctions are activated the bot will periodically send auction prompts to the set channel.
+
+### Activate command
+    $car auction activate
+This command will activate car auctions in the server, this command can only be used if there is a valid host channel, setted using the set command.
+
+### Deactivate command
+    #car auction deactivate
+this command will deactivate car auctions in the server, this command can only be used if there is a valid host channel, setted using the set command.
 
 ## Car trading commands
 

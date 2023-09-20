@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 import discord
 import DiscordUser
+import asyncio
 from Car import Car
 from datetime import datetime,timedelta
 #Imports the prompts
@@ -10,12 +11,13 @@ from Other import MessagePrompt
 from Other import Emojis
 from Other import format_number
 from Other import PromptList
+from GuildConfig import GuildConfig 
 
 class CarGacha:
     #Constants
-    __DELAY = 0 # in minutes
+    __DELAY = 60 # in minutes
     __SELL_RATE = 3 #The value that the price will be divided by when you sell the car
-   
+    __TIME_BETWEEN_AUCTIONS = 3600 # in seconds
     #Car garage command
     __CARS_LIST_MESSAGE = "These are author's cars\n"
    
@@ -36,6 +38,13 @@ class CarGacha:
     __AUCTION_NOT_ENOUGH_MONEY_MESSAGE = "user, you do not have enough credits to bid in this car!"
     __NO_BIDS_ON_AUCTION = "No one has bidded on the brand model. "+Emojis.SAD
     __WON_AUCTION_MESSAGE = "Congratulations user, you obtained a brand model!"
+
+    #Auction config
+    __AUCTION_SETTED_CHANNEL="The auction channel has been set to auction_channel"
+    __NO_AUCTION_CHANNEL = "The bot has no configured auction channel in this server, use the $car auction set command to set a channel."
+    __AUCTION_TURNED_ON_MESSAGE = "Auctions have been turned on. Happy bidding!"
+    __AUCTION_TURNED_OFF_MESSAGE = "Auctions have been turned off."
+    __AUCTION_HELP_MESSAGE = "Use $car auction set to set a channel to host auctions, you can also use the $car auction activate to activate aucitons, and car auction deactivate, to deactivate auctions."
     #User balance
     __USER_BALANCE_MESSAGE = "author you have money CR on your account."
 
@@ -67,9 +76,11 @@ class CarGacha:
         5: discord.Color.gold()
     }
 
-    def __init__(self):
+    def __init__(self,client : discord.Client):
         self.active_prompts = PromptList()
-       
+        self.client = client
+        
+
     #Handles all events that come from a message
     async def message(self,message : discord.Message):
         commands = message.content.split(" ")
@@ -100,9 +111,18 @@ class CarGacha:
             for text in commands:
                 prompt = prompt+ text + " "
             await self.__search_car_to_sell(message.author,message.channel,prompt)
-        #Temporary code
         elif command =='auction':
-            await self.__start__auction(message.author,message.channel)
+            commands.pop(0)
+            commands.pop(0)
+            if len(commands) ==0:
+                await message.channel.send(self.__AUCTION_HELP_MESSAGE)
+            elif commands[0] == 'activate':
+                await self.__set_auction_channel_on(message.channel.guild,message.channel,True)
+            elif commands[0] == 'deactivate':
+                await self.__set_auction_channel_on(message.channel.guild,message.channel,False)
+            elif commands[0] =='set':
+                await self.__set_auction_channel(message.channel.guild, message.channel)
+
     #Handles all events tha come from reactions
     async def react(self,reaction:discord.Reaction, user: discord.User):
         #Verifies if the message is in the active prompts list
@@ -118,6 +138,35 @@ class CarGacha:
         else:
             selected_prompt.continue_run = True
 
+
+    #Awaits to send auctions
+    async def wait_for_auctions(self):
+        await asyncio.sleep(self.__TIME_BETWEEN_AUCTIONS)
+        await self.__send_auctions()
+        await asyncio.ensure_future(self.wait_for_auctions())
+
+    #Gets the guilds that have auctions turned on and then starts them
+    async def __send_auctions(self):
+        guilds = GuildConfig.get_auction_on_guilds()
+        guilds_data = []
+        for guild in guilds:
+            data = {
+                "guild" : guild,
+                "car" : Car.get_random_car()
+            }
+            guilds_data.append(data)
+        
+        async def send_auction(guild : GuildConfig,car : Car):
+            discord_guild = self.client.get_guild(guild.guild_id)
+            if discord_guild == None:
+                return
+            channel =self.client.get_channel(guild.auction_channel_id)
+            if channel == None:
+                return
+            await self.__start__auction(channel,car)
+        for guild_data in guilds_data:
+            asyncio.ensure_future(send_auction(guild_data['guild'],guild_data['car']))
+
     #Creates a auction embed
     @staticmethod
     def __get_auction_embed(car : Car,price : str, winning_bidder = None)->discord.Embed:
@@ -131,9 +180,7 @@ class CarGacha:
         return auction_embed
     
     #Starts a auction
-    async def __start__auction(self,author : discord.User, channel : discord.TextChannel):
-        #Gets a completly random car for the auction
-        car = Car.get_random_car()
+    async def __start__auction(self,channel : discord.TextChannel,car : Car):
         start_price = float(car.price)/1.5
         auction_embed = CarGacha.__get_auction_embed(car,format_number(start_price))
         sent_message = await channel.send(embed= auction_embed)
@@ -143,7 +190,7 @@ class CarGacha:
             "car":car,
             "price":start_price
         }
-        new_prompt = MessagePrompt(sent_message,author,self.__bid_on_auction,data,self.__end_auction)
+        new_prompt = MessagePrompt(sent_message,None,self.__bid_on_auction,data,self.__end_auction)
         await self.active_prompts.add(new_prompt)
 
     #Called when a auction has been bidded on
@@ -188,6 +235,30 @@ class CarGacha:
         winning_user.subtract_money(prompt.data['price'])
         car.add_owner(winning_user)
         await prompt.message.channel.send(CarGacha.__WON_AUCTION_MESSAGE.replace("user",winning_user.discord_tag).replace("brand",car.brand_name).replace("model",car.model))
+
+    #Sets a channel for auctions
+    async def __set_auction_channel(self,guild : discord.Guild, channel : discord.TextChannel):
+        guild_config = GuildConfig.search_guild_config(guild.id)
+        guild_config.set_auction_channel(channel.id)
+        await channel.send(self.__AUCTION_SETTED_CHANNEL.replace("auction_channel",channel.name))
+
+    #Sets the guild to accept auctions
+    async def __set_auction_channel_on(self,guild : discord.Guild, channel : discord.TextChannel,is_on : bool):
+        guild_config = GuildConfig.search_guild_config(guild.id)
+        if guild_config.auction_channel_id == None:
+            await channel.send(self.__NO_AUCTION_CHANNEL)
+            return
+        guild_channel = guild.get_channel(guild_config.auction_channel_id)
+        if channel == None:
+            await channel.send(self.__NO_AUCTION_CHANNEL)
+            guild_config.set_auction_channel(None)
+            return
+        guild_config.set_auction_is_on(is_on)
+        if is_on:
+            await channel.send(self.__AUCTION_TURNED_ON_MESSAGE)
+        else:
+            await channel.send(self.__AUCTION_TURNED_OFF_MESSAGE)
+    
 
     #Sorts a random car from the list
     async def __gacha_car(self,author : discord.User, channel : discord.TextChannel):
