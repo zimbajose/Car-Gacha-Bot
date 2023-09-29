@@ -60,6 +60,7 @@ class Car:
         prompt = prompt.casefold()
         prompt =prompt.replace(response[1].casefold(),"")
         prompt = prompt.lstrip()
+        cursor.close()
         return prompt, response[0]
 
     #Generates the car from sql return data, returns a list if there are multiple rows, or a car if there is only one
@@ -72,7 +73,7 @@ class Car:
             image_url= data[3]
             rarity = data[4]
             drive = data[5]
-            horsepower = data[6],
+            horsepower = data[6]
             weight = data[7]
             torque = data[8]
             car_year = data[9]
@@ -99,7 +100,6 @@ class Car:
        cursor.execute(select,data)
        car = Car.__generate_from_sql_data(cursor.fetchone())
        cursor.close()
-       connection.close()
        return car
 
     #Gets a random car based on rarity
@@ -119,7 +119,6 @@ class Car:
             cursor.execute(select,data)
             car = Car.__generate_from_sql_data(cursor.fetchone())
             cursor.close()
-            connection.close()
         return car
         
 
@@ -134,7 +133,6 @@ class Car:
             cursor.execute(select,data)
             cars = Car.__generate_from_sql_data(cursor.fetchall())
             cursor.close()
-            connection.close()
             return cars
         else:
             prompt,brand_id = Car.__strip_prompt(prompt)
@@ -153,7 +151,6 @@ class Car:
                 cursor.execute(select,data)
                 cars = Car.__generate_from_sql_data(cursor.fetchall())
             cursor.close()
-            connection.close()
             return cars
     #Searches for a x number of cars based on the sent string
     @staticmethod
@@ -179,7 +176,6 @@ class Car:
             cursor.execute(select,data)
             cars = Car.__generate_from_sql_data(cursor.fetchall())
         cursor.close()
-        connection.close()
         return cars
 
     #Checks if the user has this car in his garage, returns true if yes false if no
@@ -194,7 +190,6 @@ class Car:
         cursor.execute(select,data)
         response = cursor.fetchone()
         cursor.close()
-        connection.close()
         return not response == None
 
     #Adds a ownership of this car to the database
@@ -208,7 +203,6 @@ class Car:
       cursor.execute(Car.__INSERT_INTO_CAR_POSSESSION,data)
       connection.commit()
       cursor.close()
-      connection.close()
 
     #Removes ownership of this car from the sent user
     def remove_owner(self,user : DiscordUser.User):
@@ -222,6 +216,4 @@ class Car:
         cursor.execute(query,data)
         connection.commit()
         cursor.close()
-        connection.close()
-
     

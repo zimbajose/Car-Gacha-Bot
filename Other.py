@@ -5,7 +5,7 @@ import discord
 
 #The prompt lsit
 class PromptList:
-    __TIMEOUT_DELAY = 10
+    __TIMEOUT_DELAY = 120
 
     def __init__(self):
         self.list = []

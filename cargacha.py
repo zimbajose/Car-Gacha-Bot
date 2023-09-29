@@ -15,7 +15,7 @@ from GuildConfig import GuildConfig
 
 class CarGacha:
     #Constants
-    __DELAY = 60 # in minutes
+    __DELAY = 30 # in minutes
     __SELL_RATE = 3 #The value that the price will be divided by when you sell the car
     __TIME_BETWEEN_AUCTIONS = 3600 # in seconds
     #Car garage command

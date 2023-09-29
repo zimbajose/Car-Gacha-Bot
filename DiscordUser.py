@@ -24,13 +24,11 @@ class User:
             cursor.execute(insert,{"tag":tag})
             connector.commit()
             cursor.close()
-            connector.close()
             return User(tag)
 
         last_gacha = data[1]
         gacha_money = data[2]
         cursor.close()
-        connector.close()
         return User(tag,last_gacha,gacha_money)
     
     #Sets the gacha time for this user to now
@@ -45,7 +43,6 @@ class User:
         cursor.execute(update,data)
         connector.commit()
         cursor.close()
-        connector.close()
 
     #Adds car_gacha money to the account
     def add_money(self,money : float):
@@ -62,7 +59,6 @@ class User:
         cursor.execute(update,data)
         connector.commit()
         cursor.close()
-        connector.close()
 
     #Subtracts gacha_money from the account, the resulting value may not be negative, so it retuns true if it can subtract and false otherwise
     def subtract_money(self,money:float) -> bool:
@@ -82,5 +78,4 @@ class User:
         cursor.execute(update,data)
         connector.commit()
         cursor.close()
-        connector.close()
         return True
