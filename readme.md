@@ -33,6 +33,7 @@ Searches and displays a car. It will show a prompt with up to 5 cars with simila
 ## Auctions
 Periodically this bot will send auction messages, where users can bid for a random car, this auctions do do not have weights for car rarities, so getting a rare car in a auction is much more likely.
 There are a few steps for having auctions active in your server, you must first use the $car auction set command to choose a channel to host auctions, and then use the $car auction activate for your server to start receiving auctions.
+Once a auction occurs a user may use the arrow reaction to bid 20% on the current value of the car, or the double arrow to bid 40% on the current value of the car.
 
 ### Set command
     $car auction set
