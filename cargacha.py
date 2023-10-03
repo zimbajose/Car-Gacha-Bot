@@ -57,6 +57,19 @@ class CarGacha:
     __SEARCH_LIST_TITLE = "Select the car you are looking for"
     __SEARCH_LIST_NOT_FOUND = "No cars found with similar names"
 
+    #Car command
+    __HELP_COMMAND_HEADER = "This is the car gacha bot, use one of these commands to get started."
+    __HELP_COMMANDS = [
+        "$car gacha: Rolls for a random car.",
+        "$car balance: Gets your current credits balance.",
+        "$car garage: Shows a list of all your owned cars.",
+        "$car sell: Sells a car that you own.",
+        "$car search <carname>: Searches for a car",
+        "$car auction set: Sets the current channel to receive auctions embeds.",
+        "$car auction activate: Activates auctions for this server.",
+        "$car auction deactivate: Deactivates auctions for this server."
+    ]
+
     #Rarity codes
     __rarities = {
         0:"common",
@@ -122,7 +135,8 @@ class CarGacha:
                 await self.__set_auction_channel_on(message.channel.guild,message.channel,False)
             elif commands[0] =='set':
                 await self.__set_auction_channel(message.channel.guild, message.channel)
-
+        elif command=='help':
+            await self.__send_help_embed(message.author,message.channel)
     #Handles all events tha come from reactions
     async def react(self,reaction:discord.Reaction, user: discord.User):
         #Verifies if the message is in the active prompts list
@@ -259,6 +273,16 @@ class CarGacha:
         else:
             await channel.send(self.__AUCTION_TURNED_OFF_MESSAGE)
     
+
+    #Sends a help embed
+    async def __send_help_embed(self,author : discord.User, channel : discord.TextChannel):
+        embed = discord.Embed()
+        embed.title = CarGacha.__HELP_COMMAND_HEADER
+        description = ""
+        for command in CarGacha.__HELP_COMMANDS:
+            description = description+"\n"+ command
+        embed.description = description
+        await channel.send(embed= embed)
 
     #Sorts a random car from the list
     async def __gacha_car(self,author : discord.User, channel : discord.TextChannel):
